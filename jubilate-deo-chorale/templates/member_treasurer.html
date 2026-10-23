@@ -1,0 +1,89 @@
+{#
+  member_treasurer.html - TREASURER: POST THE REPORT SHOWN ON EVERY MEMBER'S DASHBOARD
+  Only positions with "finance.post" (POSITION_CAPABILITIES in app.py) can open this page.
+  [POST] the form    [LIST] earlier reports, each with Remove
+  The newest report (by "as of" date) is the one members see in big numbers.
+#}
+{% extends "member_base.html" %}
+{% block title %}Treasurer's Report{% endblock %}
+{% block nav_home %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('member_home') }}">&larr; Dashboard</a></p>
+    <h1>Treasurer's Report</h1>
+    <p class="page-head__lead">Post the latest figures. Every member sees the newest report on their dashboard.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  {# [POST] #}
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>Post a report</h2></header>
+    <form method="post" action="{{ url_for('member_treasurer_manage') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid">
+        <div class="field{% if errors.report_date %} field--error{% endif %}">
+          <label for="f_date">As of <span class="req">*</span></label>
+          <input id="f_date" name="report_date" type="date" max="{{ today }}" required value="{{ values.report_date }}"
+                 data-required-message="Choose the date of this report.">
+          {% if errors.report_date %}<p class="field__error">{{ errors.report_date }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.balance %} field--error{% endif %}">
+          <label for="f_balance">Current balance (&#8369;) <span class="req">*</span></label>
+          <input id="f_balance" name="balance" type="text" inputmode="decimal" required value="{{ values.balance }}" placeholder="0.00">
+          {% if errors.balance %}<p class="field__error">{{ errors.balance }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.money_in %} field--error{% endif %}">
+          <label for="f_in">Money in (&#8369;) <span class="req">*</span></label>
+          <input id="f_in" name="money_in" type="text" inputmode="decimal" required value="{{ values.money_in }}" placeholder="0.00">
+          {% if errors.money_in %}<p class="field__error">{{ errors.money_in }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.money_out %} field--error{% endif %}">
+          <label for="f_out">Money out (&#8369;) <span class="req">*</span></label>
+          <input id="f_out" name="money_out" type="text" inputmode="decimal" required value="{{ values.money_out }}" placeholder="0.00">
+          {% if errors.money_out %}<p class="field__error">{{ errors.money_out }}</p>{% endif %}
+        </div>
+        <div class="field field--full{% if errors.notes %} field--error{% endif %}">
+          <label for="f_notes">Notes <span class="optional">(optional)</span></label>
+          <textarea id="f_notes" name="notes" rows="3" maxlength="{{ notes_max }}">{{ values.notes }}</textarea>
+          <p class="field__hint">For example: collections, expenses, or what the money is for.</p>
+          {% if errors.notes %}<p class="field__error">{{ errors.notes }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn--primary" type="submit">Post report</button></div>
+    </form>
+  </section>
+
+  {# [LIST] #}
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>Posted reports</h2><span class="panel__meta">{{ reports|length }} shown</span></header>
+    {% if reports %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">As of</th><th scope="col">Money in</th><th scope="col">Money out</th><th scope="col">Balance</th><th scope="col">Posted by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {% for r in reports %}
+              <tr>
+                <td data-label="As of" class="td--primary">{{ r.report_date|pretty_date }}{% if loop.first %} <span class="badge badge--active">On dashboard</span>{% endif %}</td>
+                <td data-label="Money in">{{ r.money_in|peso }}</td>
+                <td data-label="Money out">{{ r.money_out|peso }}</td>
+                <td data-label="Balance">{{ r.balance|peso }}</td>
+                <td data-label="Posted by">{{ r.posted_name }}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <form method="post" class="inline" action="{{ url_for('member_treasurer_delete', report_id=r.id) }}" data-confirm="Remove the report as of {{ r.report_date|pretty_date }}?">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="link-action link-action--danger" type="submit">Remove</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No reports yet</p><p class="empty__text">The report you post will show on every member's dashboard.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

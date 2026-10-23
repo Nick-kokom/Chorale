@@ -1,0 +1,94 @@
+{#
+  member_tasks.html - SECRETARY: ASSIGN TASKS AND TICK THEM AS DONE
+  Only positions with "tasks.manage" (POSITION_CAPABILITIES in app.py) can open this page.
+  [ASSIGN] the form    [LIST] every task, with Complete / Undo / Remove
+#}
+{% extends "member_base.html" %}
+{% block title %}Manage tasks{% endblock %}
+{% block nav_home %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('member_home') }}">&larr; Dashboard</a></p>
+    <h1>Manage tasks</h1>
+    <p class="page-head__lead">Assign a task with a target date. Members see it on their dashboard, and you tick it off when it is done.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  {# [ASSIGN] #}
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>Assign a task</h2></header>
+    <form method="post" action="{{ url_for('member_tasks_manage') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid">
+        <div class="field{% if errors.title %} field--error{% endif %}">
+          <label for="t_title">Task <span class="req">*</span></label>
+          <input id="t_title" name="title" type="text" maxlength="120" required value="{{ values.title }}">
+          {% if errors.title %}<p class="field__error">{{ errors.title }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.due_date %} field--error{% endif %}">
+          <label for="t_due">Target date <span class="req">*</span></label>
+          <input id="t_due" name="due_date" type="date" min="{{ today }}" required value="{{ values.due_date }}"
+                 data-required-message="Choose the target date.">
+          {% if errors.due_date %}<p class="field__error">{{ errors.due_date }}</p>{% endif %}
+        </div>
+        <div class="field field--full{% if errors.details %} field--error{% endif %}">
+          <label for="t_details">Details <span class="optional">(optional)</span></label>
+          <textarea id="t_details" name="details" rows="2" maxlength="500">{{ values.details }}</textarea>
+          {% if errors.details %}<p class="field__error">{{ errors.details }}</p>{% endif %}
+        </div>
+        <div class="field field--full{% if errors.member_ids %} field--error{% endif %}" data-checkbox-group>
+          <span class="field__label">Assign to <span class="req">*</span></span>
+          <p class="field__hint"><button type="button" class="link-action" data-select-all>Select everyone</button> &middot; <button type="button" class="link-action" data-select-none>Clear</button></p>
+          <div class="pick-list">
+            {% for m in members %}
+              <label class="checkbox pick"><input type="checkbox" name="member_ids" value="{{ m.id }}" {% if m.id|string in values.member_ids %}checked{% endif %}>
+                <span>{{ m.first_name }} {{ m.last_name }} <small class="muted">{{ m.voice_name }}</small></span></label>
+            {% else %}
+              <p class="muted">There are no members to assign yet.</p>
+            {% endfor %}
+          </div>
+          {% if errors.member_ids %}<p class="field__error">{{ errors.member_ids }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn--primary" type="submit">Assign task</button></div>
+    </form>
+  </section>
+
+  {# [LIST] #}
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>All tasks</h2><span class="panel__meta">{{ tasks|length }} shown</span></header>
+    {% if tasks %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">Member</th><th scope="col">Task</th><th scope="col">Target date</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {% for t in tasks %}
+              <tr>
+                <td data-label="Member" class="td--primary">{{ t.name }} <span class="mono">{{ t.member_code }}</span></td>
+                <td data-label="Task">{{ t.title }}</td>
+                <td data-label="Target date">{{ t.due_date|pretty_date }}</td>
+                <td data-label="Status">{% if t.done %}<span class="badge badge--active">Completed</span>{% elif t.overdue %}<span class="badge badge--late-red">Overdue</span>{% else %}<span class="badge badge--temporarily_inactive">Open</span>{% endif %}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <form method="post" class="inline" action="{{ url_for('member_task_toggle', task_id=t.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="done" value="{{ '0' if t.done else '1' }}">
+                      <button class="link-action" type="submit">{{ 'Undo' if t.done else 'Mark as done' }}</button>
+                    </form>
+                    <form method="post" class="inline" action="{{ url_for('member_task_delete', task_id=t.id) }}" data-confirm="Remove this task for {{ t.name }}?">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="link-action link-action--danger" type="submit">Remove</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No tasks yet</p><p class="empty__text">Assigned tasks will be listed here.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

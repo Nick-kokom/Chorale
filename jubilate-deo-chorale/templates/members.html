@@ -1,0 +1,521 @@
+{#
+  =====================================================================
+  members.html - THE MEMBERS PAGE (roster list)
+  =====================================================================
+  Data comes from the members_list function in app.py.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [HEADER]        Title, description and the Add button
+    [TABS]          Choir Members | Organizational Leaders (macro roster_tabs; shown INSIDE the top of each roster panel)
+    [LEADERS]       The Organizational Leaders tab: table, three-dot menu, removed leaders, delete dialog
+    [ORG STRUCTURE] The collapsible Organizational Structure panel (top of the page)
+    [SUMMARY CARDS] Total / active / inactive members and voice sections
+    [FILTERS]       Search box and the three filters
+    [TABLE]         The member table (becomes cards on phones)
+    [ROW MENU]      The three-dot menu at the end of each row (Deactivate / Restore)
+    [PAGINATION]    Page buttons under the table
+    [EMPTY STATE]   Messages when there is nothing to show
+
+  The Archive page is still reached from the side menu (Archive).
+
+  THE TWO TABS (?tab=leaders in the address): "Choir Members" is the original roster, unchanged. "Organizational
+  Leaders" lists the non-member leaders (org_leaders table). They are never counted as choir members.
+  Permanent deletion of a leader (three-dot menu) needs the administrator permission members.purge; the server
+  checks it again in leader_purge (app.py).
+
+  Buttons are hidden when your role may not use them, but the server also
+  refuses the action, so hiding is only for tidiness.
+  Table and card styling: search "MEMBERS REDESIGN" in style.css
+#}
+{% extends "base.html" %}
+{% from "_avatar.html" import person_avatar %}
+
+{% block title %}Members{% endblock %}
+{% block body_class %}page-members{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+
+  {# Small line icons used on this page. Use like:  {{ ico('search') }}  #}
+  {% macro ico(name) %}
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      {% if name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 4.8"/>
+      {% elif name == 'user-plus' %}<circle cx="10" cy="8.5" r="3.5"/><path d="M3.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6M19 8v6M16 11h6"/>
+      {% elif name == 'user-check' %}<circle cx="9.5" cy="8.5" r="3.5"/><path d="M3 20c0-3.6 3-6 6.5-6 1.5 0 2.9.4 4 1.1M15 17.5l2.2 2.2 4.3-4.6"/>
+      {% elif name == 'user-minus' %}<circle cx="9.5" cy="8.5" r="3.5"/><path d="M3 20c0-3.6 3-6 6.5-6 1.5 0 2.9.4 4 1.1M16 18h6"/>
+      {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+      {% elif name == 'search' %}<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>
+      {% elif name == 'download' %}<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/>
+      {% elif name == 'refresh' %}<path d="M20 11a8 8 0 00-14.5-4.2M4 4v3.5h3.5M4 13a8 8 0 0014.5 4.2M20 20v-3.5h-3.5"/>
+      {% elif name == 'eye' %}<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>
+      {% elif name == 'pencil' %}<path d="M4 20l1-4L16.5 4.5a2 2 0 013 3L8 19z"/><path d="M14.5 6.5l3 3"/>
+      {% elif name == 'dots' %}<circle cx="12" cy="5.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="18.5" r="1.2" fill="currentColor"/>
+      {% elif name == 'chevron' %}<path d="M9 6l6 6-6 6"/>
+      {% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+      {% elif name == 'leader' %}<path d="M12 2.5v4M10 4.5h4M6 21V12l6-4 6 4v9M4 21h16M10 21v-5h4v5"/>
+      {% elif name == 'trash' %}<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>
+      {% elif name == 'undo' %}<path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/>
+      {% elif name == 'shield' %}<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>
+      {% endif %}
+    </svg>
+  {% endmacro %}
+
+  {# [EMPTY STATE] reusable message #}
+  {% macro empty_state(title, text) %}
+    <div class="empty">
+      <span class="empty__mark" aria-hidden="true"></span>
+      <p class="empty__title">{{ title }}</p>
+      <p class="empty__text">{{ text }}</p>
+      {{ caller() if caller else '' }}
+    </div>
+  {% endmacro %}
+
+  {# [TABS] Two links (no JavaScript needed). The tab is kept in the address, so a reload or the Back button stays on it.
+     Placed inside the roster panel (top) on both tabs. #}
+  {% macro roster_tabs(tab, leader_count) %}
+    <nav class="rtabs" aria-label="Roster sections">
+      <a class="rtabs__tab{% if tab != 'leaders' %} is-active{% endif %}" data-roster-tab="members" href="{{ url_for('members_list') }}"{% if tab != 'leaders' %} aria-current="page"{% endif %}>{{ ico('users') }}<span>Choir Members</span></a>
+      <a class="rtabs__tab{% if tab == 'leaders' %} is-active{% endif %}" data-roster-tab="leaders" href="{{ url_for('members_list', tab='leaders') }}"{% if tab == 'leaders' %} aria-current="page"{% endif %}>{{ ico('leader') }}<span>Organizational Leaders</span>{% if leader_count %}<span class="rtabs__count">{{ leader_count }}</span>{% endif %}</a>
+    </nav>
+  {% endmacro %}
+
+  {# [HEADER] The Add button changes with the tab: Add member (choir members) or Add leader (organizational leaders). #}
+  <div class="roster-page" data-roster data-tab="{{ 'leaders' if tab == 'leaders' else 'members' }}">
+
+  <header class="page-head page-head--split">
+    <div class="page-head__text">
+      <p class="page-head__date">Members</p>
+      <h1>Roster</h1>
+      <p class="page-head__lead" data-pane="members">View and manage all choir members. Keep track of their status, voice section and membership details.</p>
+      <p class="page-head__lead" data-pane="leaders">People who lead in the organization but do not sing in the choir. They are not counted as choir members.</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+    <div class="page-head__actions">
+      {% if can('members.manage') %}
+        <a class="btn btn--primary btn--sm btn--icon" data-pane="members" href="{{ url_for('members_new') }}">{{ ico('plus') }}<span>Add member</span></a>
+        <a class="btn btn--primary btn--sm btn--icon" data-pane="leaders" href="{{ url_for('members_new', type='leader') }}">{{ ico('plus') }}<span>Add leader</span></a>
+      {% endif %}
+    </div>
+  </header>
+
+  {# [ORG STRUCTURE] The collapsible Organizational Structure panel, built from the member records (see _org_structure.html) #}
+  {% include "_org_structure.html" %}
+
+  {# [SUMMARY CARDS] Counted from the database.
+     The icon and the link are chosen from the words in each card's label:
+       total -> all members, active -> active members, voice -> the Voice sections & positions page.
+     A card with no link shows no arrow. #}
+  <section class="stats" aria-label="Member summary">
+    {% for card in cards %}
+      {% set key = card.label|lower %}
+      {% set url = none %}
+      {% if 'inactive' in key %}{% set icon = 'user-minus' %}
+      {% elif 'active' in key %}{% set icon = 'user-check' %}{% set url = url_for('members_list', status='active') %}
+      {% elif 'voice' in key %}{% set icon = 'music' %}{% if can('members.choices') %}{% set url = url_for('members_choices') %}{% endif %}
+      {% else %}{% set icon = 'users' %}{% set url = url_for('members_list') %}{% endif %}
+      {% if url %}<a class="stat stat--{{ card.state }} stat--link" href="{{ url }}">{% else %}<article class="stat stat--{{ card.state }}">{% endif %}
+        <span class="stat__icon" aria-hidden="true">{{ ico(icon) }}</span>
+        <span class="stat__body">
+          <span class="stat__label">{{ card.label }}</span>
+          <span class="stat__value">{{ card.value }}</span>
+          <span class="stat__note">{{ card.note }}</span>
+        </span>
+        {% if url %}<span class="stat__go" aria-hidden="true">{{ ico('chevron') }}</span>{% endif %}
+      {% if url %}</a>{% else %}</article>{% endif %}
+    {% endfor %}
+  </section>
+
+  {# [FILTERS] A normal form that sends the choices in the page address (GET) #}
+  <section class="panel panel--wide panel--filters" data-pane="members" aria-label="Search and filter">
+    <form class="toolbar" method="get" action="{{ url_for('members_list') }}" role="search">
+      <div class="field toolbar__search">
+        <label class="sr-only" for="q">Search</label>
+        <div class="search-box">
+          {{ ico('search') }}
+          <input id="q" name="q" type="search" value="{{ filters.q }}" maxlength="80" autocomplete="off"
+                 placeholder="{% if can('members.private') %}Name, member ID, email or number{% else %}Name or member ID{% endif %}">
+        </div>
+      </div>
+      <div class="field">
+        {# [VOICE SECTION] filter. Its choices come from the database (see [VOICE SECTION] in app.py). To remove this filter, delete the whole <div class="field"> that contains this comment, down to its closing </div>. #}
+        <label for="voice">Voice section</label>
+        <select id="voice" name="voice" data-autosubmit>
+          <option value="">All sections</option>
+          {% for v in voices %}
+            <option value="{{ v.id }}" {% if filters.voice == v.id|string %}selected{% endif %}>{{ v.name }}{% if not v.is_active %} (retired){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        {# [CHOIR POSITION] filter. Same as above: delete the whole <div class="field"> that contains this comment to remove it. #}
+        <label for="position">Choir position</label>
+        <select id="position" name="position" data-autosubmit>
+          <option value="">All positions</option>
+          {% for p in positions %}
+            <option value="{{ p.id }}" {% if filters.position == p.id|string %}selected{% endif %}>{{ p.name }}{% if not p.is_active %} (retired){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        {# [MEMBERSHIP STATUS] filter. Its choices come from MEMBER_STATUSES in app.py. Delete the whole <div class="field"> that contains this comment to remove it. #}
+        <label for="status">Status</label>
+        <select id="status" name="status" data-autosubmit>
+          <option value="">All statuses</option>
+          {% for code, label in statuses.items() %}
+            <option value="{{ code }}" {% if filters.status == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="toolbar__actions">
+        <button class="btn btn--primary btn--sm" type="submit">{{ ico('search') }}<span>Search</span></button>
+      </div>
+    </form>
+  </section>
+
+  {# [TABLE] #}
+  <section class="panel panel--wide panel--roster" aria-labelledby="roster-title">
+    {{ roster_tabs(tab, leaders|length) }}
+
+    {# ---- Choir Members pane ---- #}
+    <div data-pane="members">
+    <header class="panel__head">
+      <h2 id="roster-title" class="panel__title">{{ ico('users') }}<span>Roster</span></h2>
+      <div class="panel__tools">
+        <span class="panel__meta">{{ found }} member{{ '' if found == 1 else 's' }}{% if has_filters %} found{% endif %}</span>
+        {# Export: a POST form with a security token. Only for roles allowed to export. #}
+        {% if can('members.export') and found %}
+          <form method="post" action="{{ url_for('members_export') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="q" value="{{ filters.q }}">
+            <input type="hidden" name="voice" value="{{ filters.voice }}">
+            <input type="hidden" name="position" value="{{ filters.position }}">
+            <input type="hidden" name="status" value="{{ filters.status }}">
+            <button class="btn btn--outline btn--sm btn--icon" type="submit">{{ ico('download') }}<span>Export CSV</span></button>
+          </form>
+        {% endif %}
+        {# Reset filters: only shown while a search or filter is active. #}
+        {% if has_filters %}
+          <a class="btn btn--outline btn--sm btn--icon" href="{{ url_for('members_list') }}">{{ ico('refresh') }}<span>Reset filters</span></a>
+        {% endif %}
+        {# [RESET ROSTER] Opens a separate confirmation page. Nothing is erased from here. #}
+        {% if can('members.reset') %}
+          <a class="btn btn--danger-outline btn--sm" href="{{ url_for('roster_reset') }}">Reset roster</a>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if members %}
+      <div class="table-wrap table-wrap--roster">
+        <table class="table table--roster">
+          <thead>
+            <tr>
+              <th scope="col">Member ID</th>
+              <th scope="col">Name</th>
+              {# [VOICE SECTION] and [CHOIR POSITION] columns: each has a heading <th> here and a cell <td> further down. Delete both parts to remove a column. #}
+              <th scope="col">Voice section</th>
+              <th scope="col">Choir position</th>
+              <th scope="col">Date joined</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+              <tr>
+                <td data-label="Member ID"><span class="mono">{{ m.member_code }}</span></td>
+                <td data-label="Name" class="td--primary">
+                  <div class="table__name">
+                    {{ person_avatar(url_for('member_photo', member_id=m.id) if m.photo_ok else '', m.display_name, '', 'avatar', True) }}
+                    <a href="{{ url_for('member_detail', member_id=m.id) }}">{{ m.display_name }}</a>
+                  </div>
+                </td>
+                {# [VOICE SECTION] and [CHOIR POSITION] cells (the two <td> lines below). #}
+                <td data-label="Voice section">{{ m.voice_name }}</td>
+                <td data-label="Choir position">{{ m.position_name }}</td>
+                <td data-label="Date joined">{{ m.date_joined|pretty_date }}</td>
+                {# [MEMBERSHIP STATUS] cell: the coloured label. Its colours are in static/css/style.css (search [BADGES]). #}
+                <td data-label="Status"><span class="badge badge--{{ m.status }}">{{ m.status|status_label }}</span></td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <a class="link-action link-action--icon" href="{{ url_for('member_detail', member_id=m.id) }}">{{ ico('eye') }}<span>View</span></a>
+                    {% if can('members.manage') %}
+                      <a class="link-action link-action--icon" href="{{ url_for('member_edit', member_id=m.id) }}">{{ ico('pencil') }}<span>Edit</span></a>
+                      {# [ROW MENU] [MEMBERSHIP STATUS] The three-dot menu holds Deactivate (active members) or Restore
+                         (everyone else): a POST form with a security token, exactly as before. #}
+                      <details class="rowmenu">
+                        <summary class="rowmenu__btn" aria-label="More actions for {{ m.display_name }}">{{ ico('dots') }}</summary>
+                        <div class="rowmenu__panel">
+                          <form method="post" class="inline" action="{{ url_for('member_set_status', member_id=m.id) }}"
+                                {% if m.status == 'active' %}data-confirm="Deactivate {{ m.display_name }}? Their record and history are kept, and you can restore them at any time."{% endif %}>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="{{ 'inactive' if m.status == 'active' else 'active' }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button class="rowmenu__item" type="submit">{{ 'Deactivate' if m.status == 'active' else 'Restore' }}</button>
+                          </form>
+                        </div>
+                      </details>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {# [PAGINATION] #}
+      <nav class="pagination" aria-label="Pages">
+        <p class="pagination__info">Showing {{ first_item }}&ndash;{{ last_item }} of {{ found }}</p>
+        {% if pages > 1 %}
+          <ul class="pagination__list">
+            <li>{% if prev_url %}<a class="page-link" href="{{ prev_url }}" rel="prev">Previous</a>{% else %}<span class="page-link page-link--disabled">Previous</span>{% endif %}</li>
+            {% for item in pager %}
+              {% if item.gap %}
+                <li><span class="page-link page-link--gap" aria-hidden="true">&hellip;</span></li>
+              {% else %}
+                <li><a class="page-link{% if item.current %} page-link--current{% endif %}" href="{{ item.url }}" {% if item.current %}aria-current="page"{% endif %}>{{ item.n }}</a></li>
+              {% endif %}
+            {% endfor %}
+            <li>{% if next_url %}<a class="page-link" href="{{ next_url }}" rel="next">Next</a>{% else %}<span class="page-link page-link--disabled">Next</span>{% endif %}</li>
+          </ul>
+        {% endif %}
+      </nav>
+
+    {% elif total_members == 0 %}
+      {# [EMPTY STATE] no members at all yet #}
+      {% call empty_state("No members yet", "Add your first choir member to start building the roster.") %}
+        {% if can('members.manage') %}<p class="empty__action"><a class="btn btn--primary btn--sm" href="{{ url_for('members_new') }}">Add the first member</a></p>{% endif %}
+      {% endcall %}
+    {% else %}
+      {# [EMPTY STATE] members exist, but none match the search or filters #}
+      {% call empty_state("No members match your search", "Try a different name, or clear the filters to see everyone.") %}
+        <p class="empty__action"><a class="btn btn--outline btn--sm" href="{{ url_for('members_list') }}">Clear search and filters</a></p>
+      {% endcall %}
+    {% endif %}
+    </div>
+
+    {# ---- Organizational Leaders pane: same table look as the choir members, switched in place by the tabs ---- #}
+    <div class="panel--leaders" data-pane="leaders">
+      <header class="panel__head">
+        <h2 class="panel__title">{{ ico('users') }}<span>Roster</span></h2>
+        <div class="panel__tools">
+          <span class="panel__meta">{{ leaders|length }} leader{{ '' if leaders|length == 1 else 's' }}</span>
+        </div>
+      </header>
+      <div class="table-wrap table-wrap--roster">
+        <table class="table table--roster table--leaders">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Organizational position</th>
+              <th scope="col">Date joined</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in leaders %}
+              <tr>
+                <td data-label="Name" class="td--primary">
+                  <div class="table__name">
+                    {{ person_avatar(url_for('leader_photo', leader_id=l.id) if l.photo_ok else '', l.display_name, '', 'avatar', True) }}
+                    <a href="{{ url_for('leader_detail', leader_id=l.id) }}">{{ l.display_name }}</a>
+                  </div>
+                </td>
+                <td data-label="Position">{{ l.position_name }}</td>
+                <td data-label="Date joined">{{ l.date_joined|pretty_date }}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <a class="link-action link-action--icon" href="{{ url_for('leader_detail', leader_id=l.id) }}">{{ ico('eye') }}<span>View</span></a>
+                    {% if can('members.manage') %}
+                      <a class="link-action link-action--icon" href="{{ url_for('leader_edit', leader_id=l.id) }}">{{ ico('pencil') }}<span>Edit</span></a>
+                    {% endif %}
+                    {# [ROW MENU] Three-dot menu: Delete permanently (administrators only, see members.purge) #}
+                    {% if can('members.purge') %}
+                      <details class="rowmenu">
+                        <summary class="rowmenu__btn" aria-label="More actions for {{ l.display_name }}">{{ ico('dots') }}</summary>
+                        <div class="rowmenu__panel rowmenu__panel--wide">
+                          <button class="rowmenu__item rowmenu__item--danger" type="button" data-leader-delete
+                                  data-action="{{ url_for('leader_purge', leader_id=l.id) }}" data-name="{{ l.display_name }}" data-position="{{ l.position_name }}">{{ ico('trash') }}<span>Delete permanently</span></button>
+                        </div>
+                      </details>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr class="table__none"><td colspan="4" class="muted">No organizational leaders yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if leaders %}<p class="pagination__info">Showing {{ leaders|length }} of {{ leaders|length }}</p>{% endif %}
+    </div>
+  </section>
+
+  {# Leaders taken out of the structure earlier (kept so they can be brought back). Only for people who manage members.
+     Same table as above; Restore / Delete permanently now live in a three-dot menu. #}
+  {% if removed_leaders %}
+    <section class="panel panel--wide panel--roster panel--removed" data-pane="leaders" aria-labelledby="removed-title">
+      <header class="panel__head">
+        <h2 id="removed-title" class="panel__title">{{ ico('undo') }}<span>Removed leaders</span></h2>
+        <span class="panel__meta">{{ removed_leaders|length }} removed</span>
+      </header>
+      <p class="muted">These leaders are hidden from the organizational structure. Restore one to bring them back{% if can('members.purge') %}, or delete the record permanently{% endif %}.</p>
+      <div class="table-wrap table-wrap--roster">
+        <table class="table table--roster table--leaders">
+          <thead>
+            <tr><th scope="col">Name</th><th scope="col">Organizational position</th><th scope="col">Date joined</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+          </thead>
+          <tbody>
+            {% for l in removed_leaders %}
+              <tr>
+                <td data-label="Name" class="td--primary">
+                  <div class="table__name">
+                    {{ person_avatar(url_for('leader_photo', leader_id=l.id) if l.photo_ok else '', l.display_name, '', 'avatar', True) }}
+                    <span>{{ l.display_name }}</span>
+                  </div>
+                </td>
+                <td data-label="Position">{{ l.position_name }}</td>
+                <td data-label="Date joined">{{ l.date_joined|pretty_date }}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <details class="rowmenu">
+                      <summary class="rowmenu__btn" aria-label="More actions for {{ l.display_name }}">{{ ico('dots') }}</summary>
+                      <div class="rowmenu__panel rowmenu__panel--wide">
+                        <form method="post" class="inline" action="{{ url_for('leader_restore', leader_id=l.id) }}">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button class="rowmenu__item" type="submit">{{ ico('undo') }}<span>Restore</span></button>
+                        </form>
+                        {% if can('members.purge') %}
+                          <span class="rowmenu__sep" role="separator"></span>
+                          <button class="rowmenu__item rowmenu__item--danger" type="button" data-leader-delete
+                                  data-action="{{ url_for('leader_purge', leader_id=l.id) }}" data-name="{{ l.display_name }}" data-position="{{ l.position_name }}">{{ ico('trash') }}<span>Delete permanently</span></button>
+                        {% endif %}
+                      </div>
+                    </details>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {# [LEADERS] The one confirmation dialog shared by every Delete permanently button (filled in by the script at the
+     end of this file). The form posts to leader_purge, which checks permission and the security token again. #}
+  {% if can('members.purge') and (leaders or removed_leaders) %}
+    <dialog class="cdialog" id="leader-delete-dialog" aria-labelledby="leader-delete-title">
+      <form class="cdialog__form" method="post" action="" data-leader-delete-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm" value="delete">
+        <span class="cdialog__icon" aria-hidden="true">{{ ico('trash') }}</span>
+        <h2 class="cdialog__title" id="leader-delete-title" data-leader-delete-title>Delete leader permanently?</h2>
+        <p class="cdialog__text" data-leader-delete-text></p>
+        <div class="cdialog__actions">
+          <button class="btn btn--outline btn--sm" type="button" data-leader-delete-cancel>Cancel</button>
+          <button class="btn btn--danger btn--sm" type="submit">Delete permanently</button>
+        </div>
+      </form>
+    </dialog>
+  {% endif %}
+
+  </div>{# /roster-page #}
+
+{% endblock %}
+
+{# Small helpers for this page only:
+   - Esc hides a tooltip that is showing (keyboard users), until the pointer or focus leaves the button.
+   - The three-dot row menu closes on Esc, on a click elsewhere, and when another row's menu is opened. #}
+{% block scripts %}
+<script>
+  (function () {
+    var menus = function () { return document.querySelectorAll("details.rowmenu[open]"); };
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var openMenus = menus();
+      for (var i = 0; i < openMenus.length; i++) {
+        openMenus[i].removeAttribute("open");
+        var s = openMenus[i].querySelector("summary"); if (s) s.focus();
+      }
+      var btns = document.querySelectorAll(".icon-btn");
+      for (var j = 0; j < btns.length; j++) {
+        if (btns[j].matches(":hover, :focus-visible")) btns[j].setAttribute("data-tip-off", "");
+      }
+    });
+    document.querySelectorAll(".icon-btn").forEach(function (b) {
+      var on = function () { b.removeAttribute("data-tip-off"); };
+      b.addEventListener("mouseleave", on); b.addEventListener("blur", on);
+    });
+    // [TABS] Choir Members | Organizational Leaders switch in place: no page load. The links keep their href only as a
+    // fallback (no JavaScript). The address is updated so a reload stays on the same tab.
+    var root = document.querySelector("[data-roster]");
+    if (root) {
+      document.querySelectorAll("[data-roster-tab]").forEach(function (link) {
+        link.addEventListener("click", function (e) {
+          if (e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;       // let "open in new tab" work
+          e.preventDefault();
+          var which = link.getAttribute("data-roster-tab");
+          root.setAttribute("data-tab", which);
+          document.querySelectorAll("[data-roster-tab]").forEach(function (t) {
+            var on = t === link;
+            t.classList.toggle("is-active", on);
+            if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+          });
+          document.querySelectorAll("details.rowmenu[open]").forEach(function (d) { d.removeAttribute("open"); });
+          if (window.history && history.replaceState) {
+            var params = new URLSearchParams(window.location.search);
+            if (which === "leaders") params.set("tab", "leaders"); else params.delete("tab");
+            var qs = params.toString();
+            history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : ""));
+          }
+        });
+      });
+    }
+    document.addEventListener("click", function (e) {
+      var openMenus = menus();
+      for (var i = 0; i < openMenus.length; i++) {
+        if (!openMenus[i].contains(e.target)) openMenus[i].removeAttribute("open");
+      }
+    });
+
+    {% if can('members.purge') %}
+    // [LEADERS] Delete permanently: every button fills in and opens the one shared dialog. Nothing is sent until the
+    // red button inside the dialog is pressed. Cancel, Esc and a click on the dark area close it without deleting.
+    var dialog = document.getElementById("leader-delete-dialog");
+    if (dialog) {
+      var form = dialog.querySelector("[data-leader-delete-form]");
+      var title = dialog.querySelector("[data-leader-delete-title]");
+      var text = dialog.querySelector("[data-leader-delete-text]");
+      var cancel = dialog.querySelector("[data-leader-delete-cancel]");
+      var returnTo = null;
+      document.querySelectorAll("[data-leader-delete]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var name = btn.getAttribute("data-name") || "this leader";
+          var position = btn.getAttribute("data-position");
+          var menu = btn.closest("details");
+          returnTo = menu ? menu.querySelector("summary") : btn;
+          if (menu) menu.removeAttribute("open");
+          form.setAttribute("action", btn.getAttribute("data-action"));
+          title.textContent = "Delete " + name + " permanently?";
+          text.textContent = name + (position ? " (" + position + ")" : "") + " and their photo will be erased for good. This cannot be undone. " +
+            "Choir members, member counts and the list of positions are not affected.";
+          if (typeof dialog.showModal !== "function") {          // very old browser: plain confirm box
+            if (window.confirm(title.textContent + " This cannot be undone.")) form.submit();
+            return;
+          }
+          form.querySelector('[type="submit"]').disabled = false;
+          dialog.showModal();
+          cancel.focus();                                        // the safe choice has focus, so Enter does not delete
+        });
+      });
+      cancel.addEventListener("click", function () { dialog.close(); });
+      dialog.addEventListener("click", function (e) { if (e.target === dialog) dialog.close(); });
+      dialog.addEventListener("close", function () { if (returnTo) returnTo.focus(); });
+      form.addEventListener("submit", function () { form.querySelector('[type="submit"]').disabled = true; });   // no double send
+    }
+    {% endif %}
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{#
+  =====================================================================
+  leaders.html - NON-MEMBER ORGANIZATIONAL LEADERS (administrators)
+  =====================================================================
+  People such as the Parish Priest who appear in the organizational structure but are NOT choir members.
+  Route: leaders_list in app.py. They are never counted as members and never get a member login.
+#}
+{% extends "base.html" %}
+
+{% block title %}Organizational leaders{% endblock %}
+{% block body_class %}page-members page-leaders{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head page-head--split">
+    <div class="page-head__text">
+      <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list') }}">&larr; Members</a></p>
+      <h1>Organizational leaders</h1>
+      <p class="page-head__lead">People in the organizational structure who are not choir members, such as the Parish Priest.</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+    {% if can('members.manage') %}
+      <div class="page-head__actions"><a class="btn btn--primary" href="{{ url_for('members_new', type='leader') }}">Add leader</a></div>
+    {% endif %}
+  </header>
+
+  <section class="panel panel--wide" aria-labelledby="leaders-title">
+    <header class="panel__head"><h2 id="leaders-title">In the organizational structure</h2><span class="panel__meta">{{ leaders|length }}</span></header>
+    {% if leaders %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">Name</th><th scope="col">Position</th><th scope="col">Record type</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {% for l in leaders %}
+              <tr>
+                <td data-label="Name" class="td--primary">
+                  <div class="leader-name">
+                    <span class="avatar" aria-hidden="true">{% if l.has_photo %}<img src="{{ url_for('leader_photo', leader_id=l.id) }}" alt="" loading="lazy">{% else %}{{ l.initials }}{% endif %}</span>
+                    <strong>{{ l.display_name }}</strong>
+                  </div>
+                </td>
+                <td data-label="Position">{{ l.position_name }}</td>
+                <td data-label="Record type"><span class="badge badge--leader">Non-member leader</span></td>
+                <td data-label="Actions">
+                  {% if can('members.manage') %}
+                    <div class="table__actions">
+                      <a class="link-action" href="{{ url_for('leader_edit', leader_id=l.id) }}">Edit</a>
+                      <form method="post" class="inline" action="{{ url_for('leader_remove', leader_id=l.id) }}"
+                            data-confirm="Remove {{ l.display_name }} from the organizational structure? The record is kept and can be restored.">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="link-action link-action--danger" type="submit">Remove</button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No organizational leaders yet</p>
+        <p class="empty__text">Add the Parish Priest or another leader who is not a choir member.{% if can('members.manage') %} Choose &ldquo;Non-member Organizational Leader&rdquo; as the record type.{% endif %}</p>
+        {% if can('members.manage') %}<p class="empty__action"><a class="btn btn--primary btn--sm" href="{{ url_for('members_new', type='leader') }}">Add leader</a></p>{% endif %}</div>
+    {% endif %}
+  </section>
+
+  {% if removed %}
+    <section class="panel panel--wide" aria-labelledby="removed-title">
+      <header class="panel__head"><h2 id="removed-title">Removed from the structure</h2><span class="panel__meta">{{ removed|length }}</span></header>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">Name</th><th scope="col">Position</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {% for l in removed %}
+              <tr>
+                <td data-label="Name" class="td--primary">{{ l.display_name }}</td>
+                <td data-label="Position">{{ l.position_name }}</td>
+                <td data-label="Actions">
+                  <form method="post" class="inline" action="{{ url_for('leader_restore', leader_id=l.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="link-action" type="submit">Restore</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,212 @@
+{#
+  member_members.html - THE "MEMBERS" PAGE IN THE MEMBER AREA
+  Data comes from choir_members() in app.py (search [MEMBERS PAGE]).
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [ORG]        Organizational Structure (read-only tree shared with the admin Members page)
+    [DIRECTORY]  Choir Members Profile: the member gallery (search, filters, cards)
+    [PROFILE PANEL]  The side panel that opens when a card is clicked (Profile, Registration form, Officer details)
+    [GENERAL]    General Choir Files
+    [VOICES]     Soprano, Tenor, Alto, Bass panels (any extra voice sections come after them)
+
+  Download and "Available offline" work on every file. Upload / Edit buttons only appear where the
+  member is allowed, and the server checks the same rule again.
+#}
+{% extends "member_base.html" %}
+{% from "_avatar.html" import person_avatar %}
+{% block title %}Members{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+
+  {# One file = one row: Download, the Available offline switch, and Edit (only where allowed) #}
+  {% macro file_list(items) %}
+    {% if items %}
+      <ul class="files">
+        {% for f in items %}
+          <li class="file" data-file>
+            <span class="file__icon" aria-hidden="true">{{ icon('file') }}</span>
+            <div>
+              <p class="file__title">{{ f.title }}<span class="file__ext">{{ f.ext }}</span></p>
+              {% if f.description %}<p class="file__desc">{{ f.description }}</p>{% endif %}
+              <p class="file__meta">{{ f.size_label }} &middot; {{ f.uploader_name or 'A member' }} &middot; {{ f.when }}</p>
+            </div>
+            <div class="file__actions">
+              <a class="btn btn--outline btn--sm" href="{{ f.url }}" data-download data-file-id="{{ f.id }}" data-url="{{ f.url }}">{{ icon('download') }} Download</a>
+              <label class="switch">
+                <input type="checkbox" role="switch" data-offline-toggle data-file-id="{{ f.id }}" data-url="{{ f.url }}">
+                <span class="switch__track" aria-hidden="true"></span>
+                <span>Available offline</span>
+              </label>
+              {% if f.can_edit %}<a class="link-action" href="{{ url_for('choir_file_edit', file_id=f.id) }}">Edit</a>{% endif %}
+            </div>
+            <p class="file__note field__error" data-offline-note role="status" hidden></p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No files yet.</p>
+    {% endif %}
+  {% endmacro %}
+
+  {# The upload box. scope is "general" or the voice section's number. #}
+  {% macro upload_box(scope) %}
+    <details class="upload">
+      <summary class="btn btn--primary btn--sm">{{ icon('upload') }} Upload a file</summary>
+      <form method="post" action="{{ url_for('choir_file_upload') }}" enctype="multipart/form-data" class="form" novalidate data-validate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="scope" value="{{ scope }}">
+        <div class="field">
+          <label for="file_{{ scope }}">File <span class="req">*</span></label>
+          <input id="file_{{ scope }}" name="file" type="file" required data-required-message="Choose a file to upload.">
+          <p class="field__hint">Up to {{ file_max_mb }} MB. {{ file_types }}.</p>
+        </div>
+        <div class="field">
+          <label for="title_{{ scope }}">Title <span class="optional">(optional)</span></label>
+          <input id="title_{{ scope }}" name="title" type="text" maxlength="120" placeholder="Uses the file name if left empty">
+        </div>
+        <div class="field">
+          <label for="desc_{{ scope }}">Description <span class="optional">(optional)</span></label>
+          <textarea id="desc_{{ scope }}" name="description" rows="2" maxlength="300"></textarea>
+        </div>
+        <div class="form-actions"><button class="btn btn--primary btn--sm" type="submit">Upload</button></div>
+      </form>
+    </details>
+  {% endmacro %}
+
+  <header class="page-head">
+    <p class="page-head__date">Choir</p>
+    <h1>Members</h1>
+    <p class="page-head__lead">Meet your fellow singers and share music and materials with the choir.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  {# [ORG] The Organizational Structure, read-only. Same data and same partial as the administrator Members page
+     (org comes from build_org_structure(db, member_area=True) in choir_members()). #}
+  {% include "_org_structure.html" %}
+
+  {# [DIRECTORY] The member gallery. View only: there is no way to edit another member from here.
+     Search and the three filters work on the spot (static/js/members.js). Without JavaScript the Search button still works
+     (the server hides the cards that do not match) and every card's "View profile" opens the full profile page. #}
+  {% if show_directory %}
+  <section class="panel mgal" id="directory" aria-labelledby="dir-title" data-gallery
+           data-card-url="{{ url_for('choir_member_card', member_id=0) }}">
+    <header class="mgal__head">
+      <span class="mgal__icon" aria-hidden="true">{{ icon('users') }}</span>
+      <div class="mgal__titles">
+        <h2 id="dir-title">Choir Members Profile</h2>
+        <p class="mgal__sub">Discover the people who make our choir special.</p>
+      </div>
+      <span class="panel__meta" data-gallery-count>{{ shown_total }} member{{ '' if shown_total == 1 else 's' }}{% if q %} found{% endif %}</span>
+    </header>
+
+    <form class="mgal__tools" method="get" action="{{ url_for('choir_members') }}" role="search" data-gallery-form>
+      <div class="mgal__search">
+        <label class="sr-only" for="q">Search members by name, nickname, voice section or position</label>
+        <span class="mgal__search-icon" aria-hidden="true">{{ icon('search') }}</span>
+        <input id="q" name="q" type="search" value="{{ q }}" maxlength="80" autocomplete="off" placeholder="Search by name, nickname, voice section..." data-gallery-search>
+      </div>
+      <button class="btn btn--primary btn--sm mgal__go" type="submit">Search</button>
+      <div class="mgal__filters" role="group" aria-label="Show members">
+        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">All members <span class="chip__n" data-filter-count="all">{{ members|length }}</span></button>
+        <button class="chip" type="button" data-filter="officers" aria-pressed="false">Officers <span class="chip__n" data-filter-count="officers">{{ officer_total }}</span></button>
+        <button class="chip" type="button" data-filter="members" aria-pressed="false">Regular members <span class="chip__n" data-filter-count="members">{{ members|length - officer_total }}</span></button>
+      </div>
+    </form>
+    <p class="sr-only" role="status" aria-live="polite" data-gallery-status></p>
+
+    {% if members %}
+      <ul class="mgal__grid" data-gallery-grid>
+        {% for m in members %}
+          <li class="mcard{% if m.is_officer %} mcard--officer{% endif %}" data-member-card
+              data-id="{{ m.id }}" data-officer="{{ '1' if m.is_officer else '0' }}" data-search="{{ m.search_text }}"
+              data-name="{{ m.display_name }}" data-nickname="{{ m.nickname or '' }}" data-voice="{{ m.voice_name }}"
+              data-position="{{ m.position_name }}" data-photo="{{ m.photo_url }}"{% if not m.shown %} hidden{% endif %}>
+            {% if m.is_officer %}<span class="mcard__badge">Officer</span>{% endif %}
+            {{ person_avatar(m.photo_url, m.display_name, 'avatar--lg mcard__avatar') }}
+            <h3 class="mcard__name">{{ m.display_name }}</h3>
+            <p class="mcard__nick">{% if m.nickname %}&ldquo;{{ m.nickname }}&rdquo;{% else %}&nbsp;{% endif %}</p>
+            <p class="mcard__voice">{{ m.voice_name }}</p>
+            <p class="mcard__pos"><span class="mcard__chip{% if m.is_officer %} mcard__chip--officer{% endif %}">{{ m.position_name }}</span></p>
+            <a class="btn btn--primary btn--sm mcard__btn" href="{{ url_for('choir_member_view', member_id=m.id) }}" data-open-profile
+               aria-haspopup="dialog">View profile<span class="sr-only"> of {{ m.display_name }}</span> <span aria-hidden="true">&rarr;</span></a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="empty" data-gallery-empty{% if members and shown_total %} hidden{% endif %}>
+      <span class="empty__mark" aria-hidden="true"></span>
+      <p class="empty__title">{{ 'No members match your search' if members else 'No members yet' }}</p>
+      <p class="empty__text">{{ 'Try a different name, nickname, voice section or position, or choose another filter.' if members else 'Members will be listed here.' }}</p>
+    </div>
+  </section>
+  {% endif %}
+
+  {# [GENERAL] T-shirt designs, PowerPoints, documents #}
+  <section class="panel" id="general" aria-labelledby="general-title">
+    <header class="panel__head">
+      <h2 id="general-title">General Choir Files</h2>
+      <span class="panel__meta">{{ general|length }} file{{ '' if general|length == 1 else 's' }}</span>
+    </header>
+    <p class="muted">T-shirt designs, presentations and documents for the whole choir.</p>
+    {{ file_list(general) }}
+    {% if can_upload_general %}{{ upload_box('general') }}{% else %}<p class="muted">You can view and download these files. Only choir officers can add or change them.</p>{% endif %}
+  </section>
+
+  {# [VOICES] Soprano, Tenor, Alto, Bass #}
+ 
+  <div class="vgrid">
+    {% for p in panels %}
+      <section class="panel{% if p.mine %} panel--mine{% endif %}" id="voice-{{ p.id }}" aria-labelledby="voice-title-{{ p.id }}">
+        <header class="panel__head">
+          <h2 id="voice-title-{{ p.id }}">{{ icon('mic') }} {{ p.name }}{% if p.mine %}<span class="badge badge--active">Your section</span>{% endif %}</h2>
+          <span class="panel__meta">{{ p.files|length }} file{{ '' if p.files|length == 1 else 's' }}</span>
+        </header>
+        {{ file_list(p.files) }}
+        {% if p.can_upload %}{{ upload_box(p.id) }}{% else %}<p class="muted">You can view and download these files. Only {{ p.name }} members can add or change them.</p>{% endif %}
+      </section>
+    {% endfor %}
+  </div>
+{% endblock %}
+
+{# [PROFILE PANEL] Opens from a member card without leaving this page. Closes with the X, the Close button, a click
+   outside the panel, or Escape. What it shows is fetched from choir_member_card() in app.py, which applies the
+   privacy rules. Behaviour: static/js/members.js. Look: search "PROFILE PANEL" in static/css/member.css. #}
+{% block scripts %}
+  {% if show_directory %}
+  <div class="pm" data-pm hidden>
+    <div class="pm__scrim" data-pm-close aria-hidden="true"></div>
+    <aside class="pm__panel" role="dialog" aria-modal="true" aria-labelledby="pm-name" tabindex="-1" data-pm-panel>
+      <header class="pm__head">
+        <button class="pm__x" type="button" data-pm-close aria-label="Close profile">{{ icon('close') }}</button>
+        {{ person_avatar('', '', 'avatar--xl pm__avatar') }}
+        <div class="pm__who">
+          <span class="pm__badge" data-pm-badge hidden>Officer</span>
+          <h2 class="pm__name" id="pm-name" data-pm-name></h2>
+          <p class="pm__nick" data-pm-nick></p>
+          <span class="pm__pos" data-pm-pos></span>
+        </div>
+      </header>
+
+      <div class="pm__tabs" role="tablist" aria-label="Profile sections" data-pm-tabs>
+        <button class="pm__tab" type="button" role="tab" id="pm-tab-profile" aria-controls="pm-pane-profile" aria-selected="true" data-pm-tab="profile">{{ icon('user') }} Profile</button>
+        <button class="pm__tab" type="button" role="tab" id="pm-tab-registration" aria-controls="pm-pane-registration" aria-selected="false" tabindex="-1" data-pm-tab="registration">{{ icon('file') }} Registration form</button>
+        <button class="pm__tab" type="button" role="tab" id="pm-tab-officer" aria-controls="pm-pane-officer" aria-selected="false" tabindex="-1" data-pm-tab="officer" hidden>{{ icon('shield') }} Officer details</button>
+      </div>
+
+      <div class="pm__body" data-pm-body aria-busy="false">
+        <div class="pm__state" data-pm-state role="status" hidden></div>
+        <div class="pm__pane" role="tabpanel" id="pm-pane-profile" aria-labelledby="pm-tab-profile" tabindex="0" data-pm-pane="profile"></div>
+        <div class="pm__pane" role="tabpanel" id="pm-pane-registration" aria-labelledby="pm-tab-registration" tabindex="0" data-pm-pane="registration" hidden></div>
+        <div class="pm__pane" role="tabpanel" id="pm-pane-officer" aria-labelledby="pm-tab-officer" tabindex="0" data-pm-pane="officer" hidden></div>
+      </div>
+
+      <footer class="pm__foot">
+        <button class="btn btn--outline pm__close" type="button" data-pm-close>{{ icon('close') }} Close</button>
+      </footer>
+    </aside>
+  </div>
+  <script src="{{ url_for('static', filename='js/members.js') }}" defer></script>
+  {% endif %}
+{% endblock %}

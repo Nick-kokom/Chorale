@@ -1,0 +1,392 @@
+{#
+  =====================================================================
+  music_library.html - THE MUSIC LIBRARY
+  =====================================================================
+  Data comes from render_music_library() in app.py. One page serves administrators (admin menu) and choir
+  members (member menu): "layout" is chosen in app.py. Buttons are hidden when the person may not use them,
+  but the server refuses the action as well, so hiding is only for tidiness.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [HEADER]    Title and the choir motto
+    [SUMMARY]   The four number cards
+    [FOLDERS]   Left column: the six categories, Archived, and the voice sections
+    [TOOLS]     Search, filters and the Upload button
+    [TABLE]     The files (becomes cards on phones)
+    [UPLOAD]    The upload box
+    [PREVIEW]   The preview box
+    [OFFLINE]   Information the browser needs to keep files for offline use (see static/js/music.js)
+
+  Styles: static/css/music.css (all class names start with ml-)
+#}
+{% extends layout %}
+{% block title %}Music Library{% endblock %}
+{% block body_class %}page-music{% endblock %}
+{% block nav_music %}is-active{% endblock %}
+{% block head_extra %}{% include '_music_styles.html' %}
+{# [ML DELETE]: same rules as music.css, repeated here so this page looks right even if an old cached music.css is served. #}
+<style>
+/* ---------- [ML DELETE] Archived files: Delete in the three-dot menu + confirmation dialog ---------- */
+.ml-menu__list a, .ml-menu__list button { display: flex; align-items: center; gap: var(--space-2); box-sizing: border-box; }
+.ml-menu__list form { display: block; margin: 0; }
+.ml-menu__list .ml-i { flex: none; width: 1rem; height: 1rem; color: var(--charcoal-500); }
+.ml-menu__list a:hover .ml-i, .ml-menu__list button:hover .ml-i { color: var(--burgundy-700); }
+.ml-menu__sep { display: block; height: 1px; margin: var(--space-1) var(--space-2); background: var(--line); }
+.ml-menu__list .ml-menu__danger, .ml-menu__list .ml-menu__danger .ml-i { color: var(--error-fg); }
+.ml-menu__list .ml-menu__danger:hover { background: var(--error-bg); color: var(--error-fg); }
+.ml-menu__list .ml-menu__danger:hover .ml-i { color: var(--error-fg); }
+.ml-confirm { width: min(28rem, calc(100vw - 2rem)); }
+.ml-confirm__body { display: grid; justify-items: center; gap: var(--space-3); padding: var(--space-6) var(--space-5) var(--space-4); text-align: center; }
+.ml-confirm__icon { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 50%; color: var(--error-fg); background: var(--error-bg); }
+.ml-confirm__icon .ml-i { width: 1.5rem; height: 1.5rem; }
+.ml-confirm__title { margin: 0; font-size: var(--step-1); color: var(--charcoal-900); overflow-wrap: anywhere; }
+.ml-confirm__text { margin: 0; font-size: var(--step--1); color: var(--charcoal-700); overflow-wrap: anywhere; }
+.ml-confirm__file { display: block; padding: var(--space-2) var(--space-3); font-size: 0.82rem; color: var(--charcoal-700); background: var(--ivory); border: 1px solid var(--line); border-radius: var(--radius-s); overflow-wrap: anywhere; }
+.ml-confirm .ml-dialog__foot { justify-content: center; }
+</style>
+{% endblock %}
+
+{# Small line icons. Add one by adding a name here. #}
+{% macro glyph(name) %}
+  <svg class="ml-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    {% if name == 'file' %}<path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/>
+    {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+    {% elif name == 'folder' %}<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    {% elif name == 'grid' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>
+    {% elif name == 'download' %}<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>
+    {% elif name == 'upload' %}<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>
+    {% elif name == 'eye' %}<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+    {% elif name == 'search' %}<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/>
+    {% elif name == 'more' %}<circle cx="12" cy="5.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="18.5" r="1"/>
+    {% elif name == 'play' %}<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/>
+    {% elif name == 'image' %}<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 3 3 3-3 5 5"/>
+    {% elif name == 'archive' %}<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M10 12h4"/>
+    {% elif name == 'offline' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v7M8.8 11.8l3.2 3.2 3.2-3.2"/>
+    {% elif name == 'pencil' %}<path d="M4 20l1-4L16.5 4.5a2 2 0 013 3L8 19z"/><path d="M14.5 6.5l3 3"/>
+    {% elif name == 'undo' %}<path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/>
+    {% elif name == 'trash' %}<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>
+    {% elif name == 'close' %}<path d="M6 6l12 12M18 6L6 18"/>
+    {% endif %}
+  </svg>
+{% endmacro %}
+{% macro file_glyph(kind) %}{{ glyph({'pdf': 'file', 'audio': 'music', 'video': 'play', 'image': 'image'}.get(kind, 'file')) }}{% endmacro %}
+
+{% block content %}
+
+  {# [HEADER] #}
+  <header class="page-head page-head--split">
+    <div>
+      <p class="page-head__date">Music library</p>
+      <h1>Sacred Music. United in One Voice.</h1>
+      <p class="page-head__lead">The choir's scores, recordings, lyrics and learning materials, in one place.</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+    <blockquote class="ml-quote"><p>&ldquo;{{ tagline }}&rdquo;</p></blockquote>
+  </header>
+
+  {# [SUMMARY] Counted from the database. "Available offline" is counted in the browser, because each device keeps its own copies. #}
+  <section class="ml-stats" aria-label="Library summary">
+    <article class="ml-stat"><span class="ml-stat__icon">{{ glyph('file') }}</span>
+      <div><p class="ml-stat__label">Total files</p><p class="ml-stat__value">{{ stats.total }}</p><p class="ml-stat__note">All music library files</p></div></article>
+    <article class="ml-stat"><span class="ml-stat__icon">{{ glyph('music') }}</span>
+      <div><p class="ml-stat__label">Music materials</p><p class="ml-stat__value">{{ stats.materials }}</p><p class="ml-stat__note">Scores, audio, video, lyrics</p></div></article>
+    <article class="ml-stat"><span class="ml-stat__icon">{{ glyph('folder') }}</span>
+      <div><p class="ml-stat__label">Categories</p><p class="ml-stat__value">{{ stats.categories }}</p><p class="ml-stat__note">Organized folders</p></div></article>
+    <article class="ml-stat"><span class="ml-stat__icon">{{ glyph('offline') }}</span>
+      <div><p class="ml-stat__label">Available offline</p><p class="ml-stat__value" data-offline-count>0</p><p class="ml-stat__note">Saved on this device</p></div></article>
+  </section>
+
+  {# [OFFLINE] Everything the page script needs. No private data: just the ids and versions of the files this person may open. #}
+  <div class="ml-lib" data-music data-user="{{ g.user.id }}" data-sw="{{ url_for('music_service_worker') }}"
+       data-max-bytes="{{ max_mb * 1024 * 1024 }}" data-max-mb="{{ max_mb }}">
+    <script type="application/json" id="music-index">{{ index|tojson }}</script>
+
+    {# [FOLDERS] #}
+    <nav class="ml-rail" aria-label="Folders and voice sections">
+      <a class="ml-folder {% if not f.category and not f.archived %}is-active{% endif %}" href="{{ link(category=None, archived=None) }}" {% if not f.category and not f.archived %}aria-current="page"{% endif %}>{{ glyph('grid') }}<span>All Files</span><b>{{ stats.total }}</b></a>
+      {% for code, label in categories.items() %}
+        <a class="ml-folder {% if f.category == code and not f.archived %}is-active{% endif %}" href="{{ link(category=code, archived=None) }}" {% if f.category == code and not f.archived %}aria-current="page"{% endif %}>{{ glyph('folder') }}<span>{{ label }}</span><b>{{ cat_counts.get(code, 0) }}</b></a>
+      {% endfor %}
+      {% if can_archive %}
+        <a class="ml-folder ml-folder--archive {% if f.archived %}is-active{% endif %}" href="{{ link(archived=1, category=None) }}" {% if f.archived %}aria-current="page"{% endif %}>{{ glyph('archive') }}<span>Archived</span><b>{{ archived_count }}</b></a>
+      {% endif %}
+      <p class="ml-rail__head">Voice section</p>
+      <a class="ml-folder ml-folder--voice {% if f.voice == 'general' %}is-active{% endif %}" href="{{ link(voice=None if f.voice == 'general' else 'general') }}"><span>General</span><b>{{ general_count }}</b></a>
+      {% for v in voices %}
+        <a class="ml-folder ml-folder--voice {% if f.voice == v.id|string %}is-active{% endif %}" href="{{ link(voice=None if f.voice == v.id|string else v.id) }}"><span>{{ v.name }}</span><b>{{ voice_counts.get(v.id, 0) }}</b></a>
+      {% endfor %}
+    </nav>
+
+    <section class="panel ml-main" id="library" aria-labelledby="ml-title">
+
+      {# [TOOLS] A normal form (GET): the choices go into the page address, so the page can be bookmarked #}
+      <form class="ml-tools" method="get" action="{{ url_for('music_library') }}#library" role="search">
+        {% if f.category %}<input type="hidden" name="category" value="{{ f.category }}">{% endif %}
+        {% if f.archived %}<input type="hidden" name="archived" value="1">{% endif %}
+        <div class="ml-search">
+          {{ glyph('search') }}
+          <input name="q" type="search" value="{{ f.q }}" maxlength="80" autocomplete="off" placeholder="Search by title, composer or keywords..." aria-label="Search the Music Library">
+        </div>
+        <select name="voice" data-autosubmit aria-label="Voice section">
+          <option value="">All Voice Sections</option>
+          <option value="general" {% if f.voice == 'general' %}selected{% endif %}>General</option>
+          {% for v in voices %}<option value="{{ v.id }}" {% if f.voice == v.id|string %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+        </select>
+        <select name="type" data-autosubmit aria-label="File type">
+          <option value="">All File Types</option>
+          {% for code, label in kinds.items() %}<option value="{{ code }}" {% if f.type == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <select name="sort" data-autosubmit aria-label="Sort by">
+          {% for code, label in sorts.items() %}<option value="{{ code }}" {% if f.sort == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <button class="btn btn--outline btn--sm" type="submit">Search</button>
+        {% if has_filters %}<a class="btn btn--outline btn--sm" href="{{ url_for('music_library', archived=1 if f.archived else None) }}#library">Clear</a>{% endif %}
+        {% if can_upload and not f.archived %}
+          <button class="btn btn--primary btn--sm ml-upload-btn" type="button" data-open-upload>{{ glyph('upload') }}<span>Upload File</span></button>
+        {% endif %}
+      </form>
+
+      <header class="ml-head">
+        <h2 id="ml-title">{% if f.archived %}Archived files{% elif f.category %}{{ categories[f.category] }}{% else %}All files{% endif %}</h2>
+        <span class="panel__meta">{{ found }} file{{ '' if found == 1 else 's' }}{% if has_filters %} found{% endif %}</span>
+      </header>
+      <p class="ml-status" role="status" aria-live="polite" data-music-status></p>
+
+      {# [TABLE] #}
+      {% if rows %}
+        <div class="ml-table-wrap">
+          <table class="ml-table">
+            <thead>
+              <tr>
+                <th scope="col">Title</th><th scope="col">Category</th><th scope="col">Voice section</th><th scope="col">Composer / Arranger</th>
+                <th scope="col">Type</th><th scope="col">Uploaded by</th><th scope="col">Date</th><th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+                <tr data-file-id="{{ r.id }}">
+                  <td data-label="Title" class="ml-title">
+                    <span class="ml-tile ml-tile--{{ r.kind }}">{{ file_glyph(r.kind) }}</span>
+                    <span class="ml-title__text"><strong>{{ r.title }}</strong><small>{{ r.notes or r.original_name }}</small></span>
+                  </td>
+                  <td data-label="Category"><span class="ml-cat ml-cat--{{ r.category }}">{{ r.category_label }}</span></td>
+                  <td data-label="Voice section"><span class="ml-voice">{{ r.voice_label }}</span></td>
+                  <td data-label="Composer">{% if r.composer %}{{ r.composer }}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+                  <td data-label="Type"><span class="ml-type"><strong>{{ r.ext }}</strong><small>{{ r.size_label }}</small></span></td>
+                  <td data-label="Uploaded by">{{ r.uploader }}</td>
+                  <td data-label="Date">{{ r.date }}</td>
+                  <td data-label="Actions">
+                    <div class="ml-act">
+                      {% if r.preview %}
+                        <button class="ml-icon" type="button" data-preview data-url="{{ r.file_url }}" data-kind="{{ r.preview }}"
+                                data-title="{{ r.title }}" data-meta="{{ r.category_label }} &middot; {{ r.ext }} &middot; {{ r.size_label }}"
+                                data-download="{{ r.download_url }}" aria-label="Preview {{ r.title }}" title="Preview">{{ glyph('eye') }}</button>
+                      {% endif %}
+                      <a class="ml-icon" href="{{ r.download_url }}" download aria-label="Download {{ r.title }}" title="Download">{{ glyph('download') }}</a>
+                      {% if not r.archived %}
+                        <label class="ml-toggle" title="Available offline">
+                          <input type="checkbox" role="switch" data-offline data-id="{{ r.id }}" data-v="{{ r.version }}" data-url="{{ r.file_url }}"
+                                 data-title="{{ r.title }}" data-category="{{ r.category_label }}" data-voice="{{ r.voice_label }}"
+                                 data-composer="{{ r.composer }}" data-ext="{{ r.ext }}" data-size="{{ r.size_label }}"
+                                 aria-label="Available offline: {{ r.title }}">
+                          <span class="ml-toggle__ui" aria-hidden="true">{{ glyph('offline') }}</span>
+                        </label>
+                      {% endif %}
+                      {% if can_edit or can_archive %}
+                        <details class="ml-menu">
+                          <summary class="ml-icon" aria-label="More actions for {{ r.title }}" title="More">{{ glyph('more') }}</summary>
+                          <div class="ml-menu__list">
+                            {% if can_edit %}<a href="{{ r.edit_url }}">{{ glyph('pencil') }}<span>Edit details</span></a>{% endif %}
+                            {% if can_archive %}
+                              <form method="post" action="{{ url_for('music_restore' if r.archived else 'music_archive', file_id=r.id) }}"
+                                    {% if not r.archived %}data-confirm="Archive {{ r.title }}? It disappears from the library for everyone, and you can restore it from Archived."{% endif %}>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path.rstrip('?') }}">
+                                <button type="submit">{{ glyph('undo' if r.archived else 'archive') }}<span>{{ 'Restore' if r.archived else 'Archive' }}</span></button>
+                              </form>
+                              {# [DELETE] Archived files only. This button just opens the confirmation dialog (delete-dialog at the
+                                 bottom of this page); nothing is sent until the red button inside the dialog is pressed. #}
+                              {% if r.archived %}
+                                <span class="ml-menu__sep" role="separator"></span>
+                                <button type="button" class="ml-menu__danger" data-music-delete
+                                        data-action="{{ url_for('music_purge', file_id=r.id) }}" data-title="{{ r.title }}" data-file="{{ r.original_name }}">{{ glyph('trash') }}<span>Delete</span></button>
+                              {% endif %}
+                            {% endif %}
+                          </div>
+                        </details>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <nav class="pagination" aria-label="Pages">
+          <p class="pagination__info">Showing {{ first_item }}&ndash;{{ last_item }} of {{ found }} files</p>
+          {% if pager %}
+            <ul class="pagination__list">
+              <li>{% if prev_url %}<a class="page-link" href="{{ prev_url }}" rel="prev">Previous</a>{% else %}<span class="page-link page-link--disabled">Previous</span>{% endif %}</li>
+              {% for item in pager %}
+                {% if item.gap %}<li><span class="page-link page-link--gap" aria-hidden="true">&hellip;</span></li>
+                {% else %}<li><a class="page-link{% if item.current %} page-link--current{% endif %}" href="{{ item.url }}" {% if item.current %}aria-current="page"{% endif %}>{{ item.n }}</a></li>{% endif %}
+              {% endfor %}
+              <li>{% if next_url %}<a class="page-link" href="{{ next_url }}" rel="next">Next</a>{% else %}<span class="page-link page-link--disabled">Next</span>{% endif %}</li>
+            </ul>
+          {% endif %}
+        </nav>
+      {% else %}
+        <div class="empty">
+          <span class="empty__mark" aria-hidden="true"></span>
+          {% if f.archived and not has_filters %}
+            <p class="empty__title">Nothing is archived</p><p class="empty__text">Archived files wait here. You can restore them at any time.</p>
+          {% elif has_filters %}
+            <p class="empty__title">No files match your search</p><p class="empty__text">Try different words, or clear the filters to see everything.</p>
+          {% else %}
+            <p class="empty__title">The library is empty</p>
+            <p class="empty__text">{% if can_upload %}Upload the first score, recording or document to get started.{% else %}Scores and recordings will appear here once your officers upload them.{% endif %}</p>
+          {% endif %}
+                  </div>
+      {% endif %}
+    </section>
+  </div>
+
+  {# [UPLOAD] #}
+  {% if can_upload %}
+    {% set uv = upload.values if upload else {'title': '', 'category': '', 'voice': 'general', 'composer': '', 'notes': ''} %}
+    {% set ue = upload.errors if upload else {} %}
+    <dialog class="ml-dialog" id="upload-dialog" aria-labelledby="up-title" {% if open_upload %}data-open{% endif %}>
+      <form method="post" action="{{ url_for('music_upload') }}" enctype="multipart/form-data" class="form" novalidate data-validate data-music-upload>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <header class="ml-dialog__head">
+          <span class="ml-dialog__badge" aria-hidden="true">{{ glyph('upload') }}</span>
+          <div class="ml-dialog__titles"><h2 id="up-title">Upload a file</h2><p class="ml-dialog__meta">Add a score, recording or document to the library.</p></div>
+          <button class="ml-dialog__x" type="button" data-close aria-label="Close">{{ glyph('close') }}</button>
+        </header>
+        <div class="ml-dialog__body">
+          {% if ue %}<div class="flash flash--error" role="alert"><span>Please check the form and try again. You will need to choose the file again.</span></div>{% endif %}
+          <div class="field{% if ue.get('file') %} field--error{% endif %}">
+            <label for="up_file">File <span class="req">*</span></label>
+            <div class="ml-drop" data-drop>
+              <input id="up_file" name="file" type="file" required accept="{{ accept }}" data-required-message="Choose a file to upload.">
+              <span class="ml-drop__icon" aria-hidden="true">{{ glyph('upload') }}</span>
+              <span class="ml-drop__text"><strong data-drop-name>Drop a file here, or click to browse</strong>
+                <small data-drop-hint>PDF, audio, video, images, text, Word, PowerPoint or Excel &middot; up to {{ max_mb }} MB</small></span>
+            </div>
+            {% if ue.get('file') %}<p class="field__error">{{ ue.file }}</p>{% endif %}
+          </div>
+          <div class="field{% if ue.get('title') %} field--error{% endif %}">
+            <label for="up_title">Title <span class="req">*</span></label>
+            <input id="up_title" name="title" type="text" maxlength="120" required value="{{ uv.title }}" autocomplete="off">
+            {% if ue.get('title') %}<p class="field__error">{{ ue.title }}</p>{% endif %}
+          </div>
+          <div class="form-grid">
+            <div class="field{% if ue.get('category') %} field--error{% endif %}">
+              <label for="up_category">Category <span class="req">*</span></label>
+              <select id="up_category" name="category" required data-required-message="Choose a category.">
+                <option value="">Select category</option>
+                {% for code, label in categories.items() %}<option value="{{ code }}" {% if uv.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+              {% if ue.get('category') %}<p class="field__error">{{ ue.category }}</p>{% endif %}
+            </div>
+            <div class="field{% if ue.get('voice') %} field--error{% endif %}">
+              <label for="up_voice">Voice section</label>
+              <select id="up_voice" name="voice">
+                <option value="general" {% if uv.voice in ('', 'general') %}selected{% endif %}>General (everyone)</option>
+                {% for v in voices %}<option value="{{ v.id }}" {% if uv.voice == v.id|string %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+              </select>
+              {% if ue.get('voice') %}<p class="field__error">{{ ue.voice }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="field{% if ue.get('composer') %} field--error{% endif %}">
+            <label for="up_composer">Composer / Arranger <span class="optional">(optional)</span></label>
+            <input id="up_composer" name="composer" type="text" maxlength="120" value="{{ uv.composer }}" autocomplete="off">
+            {% if ue.get('composer') %}<p class="field__error">{{ ue.composer }}</p>{% endif %}
+          </div>
+          <div class="field{% if ue.get('notes') %} field--error{% endif %}">
+            <label for="up_notes">Short note <span class="optional">(optional)</span></label>
+            <input id="up_notes" name="notes" type="text" maxlength="200" value="{{ uv.notes }}" placeholder="For example: SATB score, vocalization guide" autocomplete="off">
+            {% if ue.get('notes') %}<p class="field__error">{{ ue.notes }}</p>{% endif %}
+          </div>
+        </div>
+        <footer class="ml-dialog__foot">
+          <button class="btn btn--outline" type="button" data-close>Cancel</button>
+          <button class="btn btn--primary" type="submit">Upload file</button>
+        </footer>
+      </form>
+    </dialog>
+  {% endif %}
+
+  {# [DELETE] The one confirmation dialog shared by every Delete button of the Archived files view. The form posts to
+     music_purge in app.py, which checks the right, the archived state and the security token again. #}
+  {% if f.archived and can_archive %}
+    <dialog class="ml-dialog ml-confirm" id="delete-dialog" aria-labelledby="delete-title">
+      <form method="post" action="" data-delete-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm" value="delete">
+        <input type="hidden" name="return_to" value="{{ request.full_path.rstrip('?') }}">
+        <div class="ml-confirm__body">
+          <span class="ml-confirm__icon" aria-hidden="true">{{ glyph('trash') }}</span>
+          <h2 class="ml-confirm__title" id="delete-title" data-delete-title>Delete file permanently?</h2>
+          <code class="ml-confirm__file" data-delete-file></code>
+          <p class="ml-confirm__text">This permanently deletes the file and its stored copy. <strong>This cannot be undone.</strong> No other file is affected.</p>
+        </div>
+        <footer class="ml-dialog__foot">
+          <button class="btn btn--outline" type="button" data-delete-cancel>Cancel</button>
+          <button class="btn btn--danger" type="submit">Delete permanently</button>
+        </footer>
+      </form>
+    </dialog>
+  {% endif %}
+
+  {# [PREVIEW] #}
+  <dialog class="ml-dialog ml-dialog--wide" id="preview-dialog" aria-labelledby="pv-title">
+    <header class="ml-dialog__head">
+      <div><h2 id="pv-title"></h2><p class="ml-dialog__meta" data-preview-meta></p></div>
+      <button class="ml-dialog__x" type="button" data-close aria-label="Close preview">{{ glyph('close') }}</button>
+    </header>
+    <div class="ml-preview" data-preview-body></div>
+    <footer class="ml-dialog__foot">
+      <a class="btn btn--primary btn--sm" data-preview-download href="#" download>{{ glyph('download') }}<span>Download</span></a>
+    </footer>
+  </dialog>
+
+{% endblock %}
+
+{% block scripts %}<script src="{{ music_asset('js/music.js') }}" defer></script>
+{% if f.archived and can_archive %}
+<script>
+  // [DELETE] Every Delete button fills in and opens the one dialog. Cancel, Esc and a click on the dark area close it without deleting.
+  (function () {
+    var dialog = document.getElementById("delete-dialog");
+    if (!dialog) return;
+    var form = dialog.querySelector("[data-delete-form]");
+    var title = dialog.querySelector("[data-delete-title]");
+    var file = dialog.querySelector("[data-delete-file]");
+    var cancel = dialog.querySelector("[data-delete-cancel]");
+    var returnTo = null;
+    document.querySelectorAll("[data-music-delete]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var name = btn.getAttribute("data-title") || "this file";
+        var menu = btn.closest("details");
+        returnTo = menu ? menu.querySelector("summary") : btn;
+        if (menu) menu.removeAttribute("open");
+        form.setAttribute("action", btn.getAttribute("data-action"));
+        title.textContent = "Delete \u201c" + name + "\u201d permanently?";
+        file.textContent = btn.getAttribute("data-file") || name;
+        if (typeof dialog.showModal !== "function") {
+          if (window.confirm(title.textContent + " This cannot be undone.")) form.submit();
+          return;
+        }
+        form.querySelector('[type="submit"]').disabled = false;
+        dialog.showModal();
+        cancel.focus();
+      });
+    });
+    cancel.addEventListener("click", function () { dialog.close(); });
+    dialog.addEventListener("click", function (e) { if (e.target === dialog) dialog.close(); });
+    dialog.addEventListener("close", function () { if (returnTo) returnTo.focus(); });
+    form.addEventListener("submit", function () { form.querySelector('[type="submit"]').disabled = true; });
+  })();
+</script>
+{% endif %}{% endblock %}

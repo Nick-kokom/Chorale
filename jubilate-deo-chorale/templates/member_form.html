@@ -1,0 +1,282 @@
+{#
+  =====================================================================
+  member_form.html - ADD PERSON and EDIT (one shared form)
+  =====================================================================
+  Used by members_new, member_edit and leader_edit in app.py. The same checks run twice:
+  in the browser (static/js/app.js) for quick feedback, and on the server
+  (read_member_form / read_leader_form in app.py), which is the one that really counts.
+
+  TWO RECORD TYPES (see RECORD_TYPES in app.py):
+    member   a choir member: Member ID, voice section, membership status, login (members table)
+    leader   a NON-MEMBER organizational leader such as the Parish Priest (org_leaders table).
+             No Member ID, voice section, membership status or login, and not counted as a member.
+  Sections marked data-only="member" are hidden by static/js/app.js when "leader" is chosen.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [DUPLICATE]    Warning shown when the person may already be recorded
+    [RECORD TYPE]  Section 1: Choir Member / Non-member Organizational Leader
+    [PERSONAL]     Section 2: names and profile photo
+    [POSITION]     Section 3: organizational position (both record types)
+    [CHOIR]        Section 4: voice section, date joined, status, Member ID (choir members only)
+    [NOTES]        Private notes (choir members, only for roles allowed to see them)
+    [BUTTONS]      Cancel and Save
+
+  A field that is red has a server message from app.py.
+
+  The position and voice-section dropdowns use the options already in the database. Adding or managing options is not
+  done from this form any more (the old "+ Add a new ..." and "Manage" links were removed on purpose); the data and
+  the members_choices page in app.py are untouched.
+
+  [DELETE] There is NO delete control on this page. A non-member leader is deleted only from Roster > Organizational
+  Leaders (three-dot menu > Delete permanently, members.html and leader_purge in app.py).
+
+  [PHOTO] Section 2 has one upload area and a preview. Choosing a new photo and saving replaces the old one; choosing
+  nothing keeps the current photo. Choir members still have the "Remove the current photo" tick box; leaders do not.
+  Look: search "ADD PERSON REDESIGN" and "PHOTO UPLOAD" in static/css/style.css.
+#}
+{% extends "base.html" %}
+
+{% block title %}{{ 'Add person' if mode == 'new' else ('Edit leader' if leader else 'Edit member') }}{% endblock %}
+{% block body_class %}page-members page-member-form{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+
+  {# Shows a server message under a field, and marks the field red #}
+  {% macro error_for(name) %}{% if errors.get(name) %}<p class="field__error" id="error-{{ name }}">{{ errors[name] }}</p>{% endif %}{% endmacro %}
+
+  {% set subject = member or leader %}
+  {% set back_url = url_for('members_list') if mode == 'new' else (url_for('members_list', tab='leaders') if leader else url_for('member_detail', member_id=member.id)) %}
+  {% set photo_url = (url_for('leader_photo', leader_id=leader.id) if leader else url_for('member_photo', member_id=member.id)) if subject and subject.has_photo else '' %}
+
+  <header class="page-head page-head--split">
+    <div class="page-head__text">
+      <p class="page-head__date"><a class="back-link" href="{{ back_url }}">&larr; {{ 'Members' if mode == 'new' else ('Leaders' if leader else member.display_name) }}</a></p>
+      <div class="mf-titlerow">
+        <h1>{{ 'Add Person' if mode == 'new' else ('Edit organizational leader' if leader else 'Edit member') }}</h1>
+      </div>
+      <p class="page-head__lead">{% if mode == 'new' %}Add a choir member or an organizational leader.{% else %}Fields marked <span class="req">*</span> are required.{% endif %}</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+    <aside class="mf-note" role="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div><strong>Membership count protection</strong><p>Non-member leaders appear in the organizational structure but are excluded from choir member counts.</p></div>
+    </aside>
+  </header>
+
+  <form class="mf" method="post" enctype="multipart/form-data" novalidate data-validate data-record-form data-record-type="{{ record_type }}"
+        action="{{ url_for('members_new') if mode == 'new' else (url_for('leader_edit', leader_id=leader.id) if leader else url_for('member_edit', member_id=member.id)) }}">
+    {# Security token. Do not remove. #}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {# [DUPLICATE] Only appears when the server finds a possible match #}
+    {% if duplicates %}
+      <div class="flash flash--info" role="alert">
+        <div class="dup">
+          <p class="dup__title">This may be someone who is already recorded.</p>
+          <ul class="dup__list">
+            {% for d in duplicates %}
+              <li>
+                {% if d.archived and not can('members.archive') %}{{ d.name }}{% else %}<a href="{{ url_for('member_archive_detail' if d.archived else 'member_detail', member_id=d.id) }}" target="_blank" rel="noopener">{{ d.name }}</a>{% endif %}
+                ({{ d.code }}){% if d.archived %} &middot; <strong>in the archive (deleted)</strong>{% endif %} &middot; {{ d.reasons }}
+              </li>
+            {% endfor %}
+          </ul>
+          <label class="checkbox">
+            <input type="checkbox" name="confirm_duplicate" value="1" required data-required-message="Tick this box if you want to save anyway.">
+            <span>This is a different person. Save anyway.</span>
+          </label>
+          <p class="field__hint">If you chose a profile photo, please select it again.</p>
+        </div>
+      </div>
+    {% endif %}
+
+    {# [RECORD TYPE] #}
+    <section class="panel panel--wide mf-card" aria-labelledby="mf-type-title">
+      <header class="mf-card__head"><span class="mf-step" aria-hidden="true">1</span>
+        <div><h2 id="mf-type-title">Record Type</h2><p>Choose how this person belongs to the organization.</p></div></header>
+      <div class="mf-card__body">
+        {% if mode == 'new' %}
+          <div class="mf-types" role="radiogroup" aria-labelledby="mf-type-title">
+            <label class="mf-type{% if record_type == 'member' %} is-selected{% endif %}">
+              <input type="radio" name="record_type" value="member" {% if record_type == 'member' %}checked{% endif %}>
+              <span class="mf-type__check" aria-hidden="true"></span>
+              <span class="mf-type__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 4.8"/></svg></span>
+              <span class="mf-type__text"><strong>Choir Member</strong><small>Counted in choir membership. Has a voice section, status and Member ID.</small></span>
+            </label>
+            <label class="mf-type mf-type--leader{% if record_type == 'leader' %} is-selected{% endif %}">
+              <input type="radio" name="record_type" value="leader" {% if record_type == 'leader' %}checked{% endif %}>
+              <span class="mf-type__check" aria-hidden="true"></span>
+              <span class="mf-type__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v4M10 4.5h4M6 21V12l6-4 6 4v9M4 21h16M10 21v-5h4v5"/></svg></span>
+              <span class="mf-type__text"><strong>Non-member Organizational Leader</strong><small>For the Parish Priest or other leaders outside the choir. Not counted as a member.</small></span>
+            </label>
+          </div>
+        {% else %}
+          <input type="hidden" name="record_type" value="{{ record_type }}">
+          <p class="readonly">{% if leader %}Non-member Organizational Leader{% else %}Choir Member{% endif %} &middot; cannot be changed after saving</p>
+        {% endif %}
+      </div>
+    </section>
+
+    {# [PERSONAL] #}
+    <section class="panel panel--wide mf-card" aria-labelledby="mf-personal-title">
+      <header class="mf-card__head"><span class="mf-step" aria-hidden="true">2</span>
+        <div><h2 id="mf-personal-title">Personal Information</h2><p>Name and basic details (profile photo).</p></div></header>
+      <div class="mf-card__body">
+        <div class="mf-grid mf-grid--names">
+
+          <div class="field{% if errors.get('first_name') %} field--error{% endif %}">
+            <label for="first_name">First name <span class="req">*</span></label>
+            <input id="first_name" name="first_name" type="text" value="{{ values.first_name }}" maxlength="60" required autocomplete="off" placeholder="Enter first name" data-letters
+                   {% if errors.get('first_name') %}aria-invalid="true" aria-describedby="error-first_name"{% endif %}>
+            {{ error_for('first_name') }}
+          </div>
+
+          <div class="field{% if errors.get('middle_name') %} field--error{% endif %}">
+            <label for="middle_name">Middle name <span class="optional">(optional)</span></label>
+            <input id="middle_name" name="middle_name" type="text" value="{{ values.middle_name }}" maxlength="60" autocomplete="off" placeholder="Enter middle name" data-letters
+                   {% if errors.get('middle_name') %}aria-invalid="true" aria-describedby="error-middle_name"{% endif %}>
+            {{ error_for('middle_name') }}
+          </div>
+
+          <div class="field field--full{% if errors.get('last_name') %} field--error{% endif %}">
+            <label for="last_name">Last name <span class="req">*</span></label>
+            <input id="last_name" name="last_name" type="text" value="{{ values.last_name }}" maxlength="60" required autocomplete="off" placeholder="Enter last name" data-letters
+                   {% if errors.get('last_name') %}aria-invalid="true" aria-describedby="error-last_name"{% endif %}>
+            {{ error_for('last_name') }}
+          </div>
+
+          <div class="field field--full{% if errors.get('photo') %} field--error{% endif %}">
+            <label for="photo">Profile photo <span class="optional">(optional)</span></label>
+            <div class="mf-photo">
+              {# The whole dashed box is one clickable label. The real file input is hidden but keyboard reachable. #}
+              <div class="mf-drop">
+                <label class="mf-drop__pick" for="photo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 010-8 5 5 0 019.6-1.3A4.5 4.5 0 0117 18"/><path d="M12 12v7M9 14l3-3 3 3"/></svg>
+                  <strong data-photo-name>Click to upload photo</strong>
+                  <span class="mf-drop__hint">JPG, PNG or WebP &middot; up to {{ photo_max_mb }} MB</span>
+                </label>
+                <input class="mf-drop__input" id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" data-photo-input data-max-mb="{{ photo_max_mb }}">
+                {# Choir members keep their "remove photo" tick box. Leaders have none: their photo only changes by uploading a new one. #}
+                {% if not leader and subject and subject.has_photo %}
+                  <label class="checkbox"><input type="checkbox" name="remove_photo" value="1"><span>Remove the current photo</span></label>
+                {% endif %}
+              </div>
+              <div class="mf-preview">
+                <span>Preview</span>
+                <div class="photo-preview" data-photo-preview>
+                  {% if photo_url %}<img src="{{ photo_url }}" alt="Current profile photo">
+                  {% elif subject %}{{ subject.initials }}
+                  {% else %}<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7z"/></svg>{% endif %}
+                </div>
+                <span>{{ 'Current photo' if photo_url else 'No photo uploaded' }}</span>
+              </div>
+            </div>
+            {{ error_for('photo') }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# Email and contact number are not asked here: members fill them in from their own area, and they appear on the member's profile. #}
+
+    {# [POSITION] Section 3: shown for both record types. The options come from the database (see [CHOIR POSITION] in app.py). #}
+    <section class="panel panel--wide mf-card" aria-labelledby="mf-position-title">
+      <header class="mf-card__head"><span class="mf-step" aria-hidden="true">3</span>
+        <div><h2 id="mf-position-title">Organizational assignment</h2><p>Select the person's organizational position.</p></div></header>
+      <div class="mf-card__body">
+        <div class="mf-grid">
+          <div class="field field--full{% if errors.get('position_id') %} field--error{% endif %}">
+            <label for="position_id">Organizational position <span class="req">*</span></label>
+            <select id="position_id" name="position_id" required data-required-message="Choose an organizational position."
+                    {% if errors.get('position_id') %}aria-invalid="true" aria-describedby="error-position_id"{% endif %}>
+              <option value="">Select position</option>
+              {% for p in positions %}
+                <option value="{{ p.id }}" {% if p.ordinary %}data-ordinary="1"{% endif %} {% if values.position_id == p.id|string %}selected{% endif %}>{{ p.name }}{% if not p.is_active %} (retired){% endif %}</option>
+              {% endfor %}
+            </select>
+            <p class="mf-hint" data-only="member">A position is a role in the choir. It does not give access to this system. Choose Member for an ordinary choir member.</p>
+            <p class="mf-hint" data-only="leader" hidden>A leader can hold any position except Ordinary Member. More than one person can hold the same position.</p>
+            {{ error_for('position_id') }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# [CHOIR] Section 4: choir members only #}
+    <section class="panel panel--wide mf-card" data-only="member" aria-labelledby="mf-choir-title">
+      <header class="mf-card__head"><span class="mf-step" aria-hidden="true">4</span>
+        <div><h2 id="mf-choir-title">Choir member details</h2><p>Membership information (only for choir members).</p></div></header>
+      <div class="mf-card__body">
+        <div class="mf-grid mf-grid--choir">
+
+          {# [VOICE SECTION] field. The options come from the database (see [VOICE SECTION] in app.py). The system requires every choir member to have a voice section. #}
+          <div class="field{% if errors.get('voice_section_id') %} field--error{% endif %}">
+            <label for="voice_section_id">Voice section <span class="req">*</span></label>
+            <select id="voice_section_id" name="voice_section_id" required data-required-message="Choose a voice section."
+                    {% if errors.get('voice_section_id') %}aria-invalid="true" aria-describedby="error-voice_section_id"{% endif %}>
+              <option value="">Select voice section</option>
+              {% for v in voices %}
+                <option value="{{ v.id }}" {% if values.voice_section_id == v.id|string %}selected{% endif %}>{{ v.name }}{% if not v.is_active %} (retired){% endif %}</option>
+              {% endfor %}
+            </select>
+            {{ error_for('voice_section_id') }}
+          </div>
+
+          <div class="field{% if errors.get('date_joined') %} field--error{% endif %}">
+            <label for="date_joined">Date joined <span class="req">*</span></label>
+            <input id="date_joined" name="date_joined" type="date" value="{{ values.date_joined or today }}" min="1900-01-01" max="{{ today }}" required
+                   data-required-message="Enter the date this member joined." data-max-message="Date joined can't be in the future."
+                   {% if errors.get('date_joined') %}aria-invalid="true" aria-describedby="error-date_joined"{% endif %}>
+            <p class="field__hint">Any past date works, so you can record members who joined long ago.</p>
+            {{ error_for('date_joined') }}
+          </div>
+
+          {# [MEMBERSHIP STATUS] field. The options come from MEMBER_STATUSES in app.py. #}
+          <div class="field{% if errors.get('status') %} field--error{% endif %}">
+            <label for="status">Membership status <span class="req">*</span></label>
+            <select id="status" name="status" required data-required-message="Choose a membership status."
+                    {% if errors.get('status') %}aria-invalid="true" aria-describedby="error-status"{% endif %}>
+              {% for code, label in statuses.items() %}
+                <option value="{{ code }}" {% if values.status == code %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {{ error_for('status') }}
+          </div>
+
+          <div class="field">
+            <span class="field__label">Member ID</span>
+            {% if mode == 'new' %}
+              <p class="readonly">Auto-generated</p>
+              <p class="field__hint">Assigned automatically when you save.{% if can('members.credentials') %} A login is created at the same time: the Member ID is the username, and an 8-character password is generated and shown to you once.{% endif %}</p>
+            {% elif member %}
+              <p class="readonly"><span class="mono">{{ member.member_code }}</span> &middot; cannot be changed</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# [NOTES] Choir members only, and only roles allowed to see notes get this box #}
+    {% if can('members.notes') %}
+      <section class="panel panel--wide mf-card" data-only="member" aria-labelledby="mf-notes-title">
+        <header class="mf-card__head"><div><h2 id="mf-notes-title">Notes</h2><p>Visible only to people allowed to see member notes.</p></div></header>
+        <div class="mf-card__body">
+          <div class="field{% if errors.get('notes') %} field--error{% endif %}">
+            <label for="notes" class="sr-only">Notes</label>
+            <textarea id="notes" name="notes" rows="4" maxlength="2000" placeholder="Optional."
+                      {% if errors.get('notes') %}aria-invalid="true" aria-describedby="error-notes"{% endif %}>{{ values.notes }}</textarea>
+            {{ error_for('notes') }}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    {# [BUTTONS] #}
+    <div class="form-actions">
+      <a class="btn btn--outline btn--sm" href="{{ back_url }}">Cancel</a>
+      <button class="btn btn--primary btn--sm" type="submit">{{ 'Save person' if mode == 'new' else 'Save changes' }}</button>
+    </div>
+  </form>
+
+{% endblock %}

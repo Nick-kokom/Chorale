@@ -1,0 +1,46 @@
+{#
+  member_file_edit.html - EDIT OR REMOVE ONE CHOIR FILE
+  Route: choir_file_edit / choir_file_delete in app.py. Only people allowed to change files in that
+  place (their own voice section, or officers for General Choir Files) can open this page.
+#}
+{% extends "member_base.html" %}
+{% block title %}Edit file{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ back }}">&larr; Members</a></p>
+    <h1>Edit file</h1>
+    <p class="page-head__lead">Current file: {{ file.original_name }} ({{ file.size_label }})</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel narrow">
+    <form method="post" action="{{ url_for('choir_file_edit', file_id=file.id) }}" enctype="multipart/form-data" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="title">Title <span class="req">*</span></label>
+        <input id="title" name="title" type="text" maxlength="120" required value="{{ values.title }}">
+      </div>
+      <div class="field">
+        <label for="description">Description <span class="optional">(optional)</span></label>
+        <textarea id="description" name="description" rows="3" maxlength="300">{{ values.description }}</textarea>
+      </div>
+      <div class="field">
+        <label for="file">Replace the file <span class="optional">(optional)</span></label>
+        <input id="file" name="file" type="file">
+        <p class="field__hint">Leave empty to keep the current file. Up to {{ file_max_mb }} MB.</p>
+      </div>
+      <div class="form-actions"><a class="btn btn--outline" href="{{ back }}">Cancel</a><button class="btn btn--primary" type="submit">Save changes</button></div>
+    </form>
+  </section>
+
+  <section class="panel narrow">
+    <header class="panel__head"><h2>Remove file</h2></header>
+    <p class="muted">Removes the file for everyone. Members who saved it for offline use keep their own copy until they switch it off.</p>
+    <form method="post" action="{{ url_for('choir_file_delete', file_id=file.id) }}" data-confirm="Remove {{ file.title }}? This cannot be undone.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn--danger-outline btn--sm" type="submit">Remove file</button>
+    </form>
+  </section>
+{% endblock %}

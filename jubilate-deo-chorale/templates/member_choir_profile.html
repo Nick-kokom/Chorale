@@ -1,0 +1,46 @@
+{#
+  member_choir_profile.html - ANOTHER MEMBER'S PROFILE (VIEW ONLY)
+  Route: choir_member_view in app.py. There is no edit button and no edit route for other people's details.
+  The reason for joining is never shown here (administrators only). A birthday shows month and day only.
+#}
+{% extends "member_base.html" %}
+{% from "_avatar.html" import person_avatar %}
+{% block title %}{{ person.display_name }}{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('choir_members') }}">&larr; Members</a></p>
+    <div class="profile-view">
+      {{ person_avatar(url_for('choir_member_photo', member_id=person.id) if person.photo_ok else '', person.display_name, 'avatar--lg') }}
+      <div>
+        <h1 class="profile__name">{{ person.display_name }}</h1>
+        <p class="profile__meta">{% if person.nickname %}&ldquo;{{ person.nickname }}&rdquo; &middot; {% endif %}{{ person.position_name }} &middot; {{ person.voice_name }}</p>
+      </div>
+      {% if is_me %}<div class="profile__actions"><a class="btn btn--outline" href="{{ url_for('member_profile') }}">Edit my information</a></div>{% endif %}
+    </div>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>Profile</h2></header>
+    {% if person.has_profile %}
+      <dl class="details">
+        <div><dt>Voice section</dt><dd>{{ person.voice_name }}</dd></div>
+        <div><dt>Choir position</dt><dd>{{ person.position_name }}</dd></div>
+        <div><dt>Date joined</dt><dd>{{ person.date_joined|pretty_date }}</dd></div>
+        <div><dt>Birthday</dt><dd>{{ person.birthday or '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+        <div><dt>Contact number</dt><dd>{% if person.phone %}<a href="tel:{{ person.phone }}">{{ person.phone }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+        <div><dt>Facebook</dt><dd>{% if person.facebook_link %}<a href="{{ person.facebook_link }}" target="_blank" rel="noopener noreferrer">{{ person.facebook_link }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+      </dl>
+    {% else %}
+      <dl class="details">
+        <div><dt>Voice section</dt><dd>{{ person.voice_name }}</dd></div>
+        <div><dt>Choir position</dt><dd>{{ person.position_name }}</dd></div>
+        <div><dt>Date joined</dt><dd>{{ person.date_joined|pretty_date }}</dd></div>
+      </dl>
+      <p class="muted">This member has not filled in their personal information yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

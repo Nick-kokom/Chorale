@@ -1,0 +1,282 @@
+{#
+  =====================================================================
+  base.html - THE SHARED LAYOUT USED BY EVERY PAGE
+  =====================================================================
+  Every page (login, setup, dashboard) is built on top of this file.
+  Change something here and it changes on all pages.
+
+  Notes written inside curly-brace-and-hash markers (like this whole
+  block) are only for you. They never appear on the website.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [PAGE TITLE]     The text shown on the browser tab
+    [BROWSER COLOR]  The colour of the phone browser bar
+    [LOGO]           How the logo is displayed (image or placeholder)
+    [MESSAGES]       The notice boxes ("You have signed out", errors)
+    [SIDEBAR]        The side menu after signing in (menu items, Sign out)
+    [LOGIN LAYOUT]   The frame around the login and setup pages
+  =====================================================================
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  {# [BROWSER COLOR] Colour of the address bar on phones. Use any hex colour. #}
+  <meta name="theme-color" content="#5C1226">
+
+  {# [PAGE TITLE] Browser tab shows "Page name | Jubilate Deo Chorale".
+     The choir name comes from app.py (APP_NAME). #}
+  <title>{% block title %}{{ app_name }}{% endblock %} | {{ app_name }}</title>
+
+  {# Connects the stylesheet. All colours, fonts and sizes live in static/css/style.css #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {# [ACTION CENTER] styles for the right-hand sidebar (administrators only) #}
+  {% if can('members.access') %}<link rel="stylesheet" href="{{ url_for('static', filename='css/action_center.css') }}">{% endif %}
+  {# Pages can add their own stylesheet here (the Music Library does) #}
+  {% block head_extra %}{% endblock %}
+
+  {# [SIDEBAR STATE] Runs before the page is drawn. If the administrator last collapsed the side menu, the page
+     starts collapsed, so it does not flash open while moving between Dashboard, Members, Schedule and so on.
+     The choice is kept in the browser (localStorage, key "jdc.sidebar"); the toggle button is handled in app.js. #}
+  {% if g.user %}
+  <script>
+    (function () {
+      try { if (localStorage.getItem("jdc.sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed"); }
+      catch (e) { /* storage blocked: the menu simply starts open */ }
+    })();
+  </script>
+  {% endif %}
+</head>
+
+
+{# =====================================================================
+   [LOGO] REUSABLE LOGO
+   Shows static/images/logo.png if the file exists.
+   If not, it shows the gold "JDC" placeholder circle.
+   - To change the placeholder letters, edit JDC below.
+   - To change the logo SIZE, edit --logo-lg / --logo-sm in style.css.
+   ===================================================================== #}
+{% macro logo(size='md') %}
+  {% if has_logo %}
+    <img class="logo logo--{{ size }}" src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ app_name }} logo">
+  {% else %}
+    <div class="logo logo--{{ size }} logo--placeholder" role="img" aria-label="Choir logo placeholder">
+      <span>JDC</span>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
+{# =====================================================================
+   [SIDEBAR ICONS] One small line icon per menu item. They are what stays visible when the menu is
+   collapsed to the narrow rail. Add a new item by adding a name here and using {{ nav_icon('name') }}.
+   ===================================================================== #}
+{% macro nav_icon(name) %}
+  <svg class="nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    {% if name == 'dashboard' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>
+    {% elif name == 'home' %}<path d="M3 11l9-8 9 8M5 10v10h14V10"/>
+    {% elif name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 4.8"/>
+    {% elif name == 'archive' %}<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M10 12h4"/>
+    {% elif name == 'calendar' %}<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+    {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+    {% elif name == 'announce' %}<path d="M4 10v4h3l7 4V6L7 10zM18 9a4 4 0 010 6"/>
+    {% elif name == 'shield' %}<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>
+    {% elif name == 'out' %}<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>
+    {% elif name == 'collapse' %}<path d="M11 7l-5 5 5 5M18 7l-5 5 5 5"/>
+    {% elif name == 'close' %}<path d="M6 6l12 12M18 6L6 18"/>
+    {% endif %}
+  </svg>
+{% endmacro %}
+
+
+{# =====================================================================
+   [MESSAGES] REUSABLE NOTICE BOXES
+   Shows messages such as "You have signed out." or "The email or
+   password is incorrect." The wording of each message is set in app.py.
+   Their colours are set in style.css (search [MESSAGES]).
+   ===================================================================== #}
+{% macro flashes() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flashes" aria-live="polite">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}" role="status">
+            <span>{{ message }}</span>
+            <button type="button" class="flash__close" data-dismiss aria-label="Dismiss message">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endmacro %}
+
+
+<body class="{% block body_class %}{% endblock %}">
+  {# Lets keyboard users skip straight to the content. Leave as is. #}
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {# The page shows ONE of two layouts:
+     1) If someone is signed in  -> the sidebar layout (dashboard)
+     2) If nobody is signed in   -> the login/setup layout           #}
+  {% if g.user %}
+
+    {# =================================================================
+       SIGNED-IN LAYOUT: side menu on the left, content on the right
+       ================================================================= #}
+    <div class="shell">
+
+      {# [SIDEBAR] THE ONE ADMIN SIDE MENU, used by every administrator page.
+         - Desktop: the round-edged arrow button (top of the menu) collapses it to a narrow icon rail and back.
+           The choice is remembered in the browser, so it stays the same on every page.
+         - Phone and tablet: it is a slide-in overlay, opened by the menu button in the top bar and closed with
+           the X, the dark area, or the Esc key.
+         Colours and sizes: --sidebar-bg and --sidebar-w / --sidebar-rail-w in style.css (SECTION 1). #}
+      <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+
+        {# [SIDEBAR] Logo and choir name at the top of the menu, with the collapse button.
+           To change the words, edit "Jubilate Deo" and "Chorale". #}
+        <div class="sidebar__brand">
+          {{ logo('sm') }}
+          <div class="sidebar__titles">
+            <p class="sidebar__name">Jubilate Deo</p>
+            <p class="sidebar__sub">Chorale</p>
+          </div>
+          <button class="sidebar__collapse" type="button" data-sidebar-collapse aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar">
+            {{ nav_icon('collapse') }}
+          </button>
+          <button class="sidebar__close" type="button" data-menu-close aria-label="Close menu">
+            {{ nav_icon('close') }}
+          </button>
+        </div>
+
+        {# [SIDEBAR] MENU ITEMS. Each link keeps its own permission check and its own "is-active" block, which
+           the pages fill in (for example members.html sets nav_members). data-label is the name shown as a
+           tooltip when the menu is collapsed to icons.
+           - The "nav__item--soon" one is a greyed-out placeholder for a feature not built yet.
+           - Delete a whole line to remove an item. #}
+        <nav class="nav">
+          {% if can('dashboard.view') %}
+            <a class="nav__item {% block nav_dashboard %}{% endblock %}" href="{{ url_for('dashboard') }}" data-label="Dashboard">{{ nav_icon('dashboard') }}<span class="nav__label">Dashboard</span></a>
+          {% endif %}
+          {# A choir member's own login only sees their own small area #}
+          {% if can('member.home') %}
+            <a class="nav__item {% block nav_member_home %}{% endblock %}" href="{{ url_for('member_home') }}" data-label="My area">{{ nav_icon('home') }}<span class="nav__label">My area</span></a>
+          {% endif %}
+          {# Members: a real link for roles allowed to view members. Highlighted by members pages. #}
+          {% if can('members.view') %}
+            <a class="nav__item {% block nav_members %}{% endblock %}" href="{{ url_for('members_list') }}" data-label="Members">{{ nav_icon('users') }}<span class="nav__label">Members</span></a>
+          {% endif %}
+          {# Archive: deleted members (administrators only) #}
+          {% if can('members.archive') %}
+            <a class="nav__item {% block nav_archive %}{% endblock %}" href="{{ url_for('members_archive') }}" data-label="Archive">{{ nav_icon('archive') }}<span class="nav__label">Archive</span></a>
+          {% endif %}
+          {# Schedule: a real link for roles allowed to view it. Highlighted by the schedule pages. #}
+          {% if can('schedule.view') %}
+            <a class="nav__item {% block nav_schedule %}{% endblock %}" href="{{ url_for('schedule_list') }}" data-label="Schedule">{{ nav_icon('calendar') }}<span class="nav__label">Schedule</span></a>
+          {% endif %}
+          {# Music library: a real link for people allowed to open it. Highlighted by the Music Library pages (nav_music). #}
+          {% if can('music.view') %}
+            <a class="nav__item {% block nav_music %}{% endblock %}" href="{{ url_for('music_library') }}" data-label="Music Library">{{ nav_icon('music') }}<span class="nav__label">Music Library</span></a>
+          {% endif %}
+          {# Announcements: the page exists (announcements_admin), so this is a real link for administrators.
+             Highlighted by announcements_admin.html through the nav_announcements block. #}
+          {% if can('announcements.manage') %}
+            <a class="nav__item {% block nav_announcements %}{% endblock %}" href="{{ url_for('announcements_admin') }}" data-label="Announcements">{{ nav_icon('announce') }}<span class="nav__label">Announcements</span></a>
+          {% endif %}
+          {# [ACTION CENTER] Opens the Action Center panel (grant or revoke a choir member's access).
+             It lives here in the side menu, not as a separate tab on the right edge. #}
+          {% if can('members.access') %}
+            <button class="nav__item" type="button" data-ac-open aria-controls="action-center" aria-expanded="false" data-label="Action Center">{{ nav_icon('shield') }}<span class="nav__label">Action Center</span></button>
+          {% endif %}
+        </nav>
+
+        {# [SIDEBAR] Gold musical staff + choir motto. Purely decorative; hidden when the menu is collapsed. #}
+        <div class="sidebar__motto" aria-hidden="true">
+          <svg class="sidebar__staff" viewBox="0 0 200 44" preserveAspectRatio="xMidYMid meet" focusable="false">
+            <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity=".75">
+              <path d="M4 10h192M4 17h192M4 24h192M4 31h192M4 38h192"/>
+            </g>
+            <g fill="currentColor">
+              <ellipse cx="46" cy="31" rx="4.6" ry="3.4" transform="rotate(-20 46 31)"/>
+              <ellipse cx="86" cy="24" rx="4.6" ry="3.4" transform="rotate(-20 86 24)"/>
+              <ellipse cx="126" cy="17" rx="4.6" ry="3.4" transform="rotate(-20 126 17)"/>
+              <ellipse cx="164" cy="24" rx="4.6" ry="3.4" transform="rotate(-20 164 24)"/>
+            </g>
+            <g stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+              <path d="M50 29.5V8M90 22.5V3M130 15.5V-2M168 22.5V3"/>
+            </g>
+          </svg>
+          <p class="sidebar__motto-text">One Voice in Praise to God</p>
+        </div>
+
+        {# [SIDEBAR] Bottom of the menu: who is signed in + Sign out button.
+           When collapsed, only the initials circle and the Sign out icon remain. #}
+        <div class="sidebar__foot">
+          <span class="sidebar__avatar" aria-hidden="true" data-label="{{ g.user.full_name }} ({{ g.user.role|capitalize }})">{{ (g.user.full_name.split()[0][:1] ~ (g.user.full_name.split()[-1][:1] if g.user.full_name.split()|length > 1 else ''))|upper }}</span>
+          <p class="sidebar__user">{{ g.user.full_name }}</p>
+          <p class="sidebar__role">{{ g.user.role|capitalize }}</p>
+          <form method="post" action="{{ url_for('logout') }}">
+            {# Security token. Do not remove from any form. #}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn--ghost-light btn--block sidebar__signout" type="submit" aria-label="Sign out" data-label="Sign out">{{ nav_icon('out') }}<span class="nav__label">Sign out</span></button>
+          </form>
+        </div>
+      </aside>
+
+      <div class="shell__main">
+
+        {# [MOBILE] The burgundy bar at the top on phones, with the menu button.
+           It is hidden on computers. #}
+        <header class="topbar">
+          <button class="menu-btn" type="button" data-menu-toggle aria-controls="sidebar" aria-expanded="false">
+            <span class="menu-btn__bars" aria-hidden="true"></span>
+            <span class="sr-only">Open menu</span>
+          </button>
+          <p class="topbar__title">{{ app_name }}</p>
+        </header>
+
+        {# MAIN CONTENT: each page (like dashboard.html) fills in the block below #}
+        <main id="main" class="content">
+          {{ flashes() }}
+          {% block content %}{% endblock %}
+        </main>
+
+        {# Footer line shown at the bottom of every signed-in page.
+           The tagline text is set in app.py (TAGLINE). #}
+        <footer class="footer">
+          <p>{{ tagline }}</p>
+        </footer>
+      </div>
+    </div>
+
+    {# Dark overlay behind the phone menu. Leave as is. #}
+    <div class="scrim" data-menu-scrim hidden></div>
+
+    {# [ACTION CENTER] Right-hand sidebar to grant or revoke a choir member's access. Administrators only. #}
+    {% if can('members.access') %}{% include "_action_center.html" %}{% endif %}
+
+  {% else %}
+
+    {# =================================================================
+       [LOGIN LAYOUT] SIGNED-OUT FRAME (login and setup pages)
+       A plain centred stage. What appears in the middle comes from
+       login.html (splash + burgundy box) or setup_admin.html.
+       Background colour: --stage-bg in style.css (search [LOGIN BACKGROUND])
+       ================================================================= #}
+    <div class="auth">
+      <main id="main" class="auth__stage">
+        {% block auth_content %}{% endblock %}
+      </main>
+
+      {# Small copyright line at the bottom. The year updates by itself. #}
+      <p class="auth__legal">&copy; {{ current_year }} {{ app_name }}</p>
+    </div>
+  {% endif %}
+
+  {# Small interactions (Show password, mobile menu). Code is in static/js/app.js #}
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

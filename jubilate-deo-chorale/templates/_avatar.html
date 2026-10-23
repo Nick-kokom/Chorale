@@ -1,0 +1,25 @@
+{#
+  _avatar.html - ONE ROUND PROFILE PICTURE, USED EVERYWHERE A MEMBER'S PHOTO IS SHOWN
+  [DEFAULT AVATAR] If the member has no photo (empty, missing, broken or unreadable), a gold-ringed burgundy
+  silhouette on ivory is shown instead. It is drawn inline (SVG), so it needs no image file and no internet.
+  If the photo file exists but the browser cannot load it, app.js ("DEFAULT AVATAR") swaps the picture for the
+  same silhouette. A member's real photo always wins as soon as a valid one is uploaded.
+
+  Use:  {% from "_avatar.html" import person_avatar %}
+        {{ person_avatar(photo_url_or_empty, "Full name", "avatar--lg") }}
+  photo_url   the address of the picture, or "" / none when the member has no (valid) photo
+  name        the person's name, used for the accessible label
+  cls         extra size classes (avatar--md, avatar--lg, avatar--xl ...)
+  base        "avatar" (default) or "org-avatar" (the organizational tree)
+  decorative  True when the name is written right beside the picture (hides it from screen readers)
+  Colours and sizes: search "DEFAULT AVATAR" in static/css/style.css.
+#}
+{% macro person_avatar(photo_url, name, cls='', base='avatar', decorative=False) -%}
+  {%- set label = ('Profile photo of ' ~ name) if photo_url else ('No profile photo provided for ' ~ name ~ ' (default avatar shown)') -%}
+  <span class="{{ base }} avatar--sil {{ cls }}{% if photo_url %} has-photo{% endif %}" data-avatar
+        {%- if decorative %} aria-hidden="true"{% else %} role="img" aria-label="{{ label }}"{% endif %}
+        data-nophoto-label="No profile photo provided for {{ name }} (default avatar shown)">
+    {%- if photo_url %}<img src="{{ photo_url }}" alt="" loading="lazy" decoding="async" data-avatar-img>{% endif -%}
+    <svg class="avatar__sil" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle cx="32" cy="23" r="11"/><path d="M9 64c0-13.5 10.3-21.5 23-21.5S55 50.5 55 64z"/></svg>
+  </span>
+{%- endmacro %}

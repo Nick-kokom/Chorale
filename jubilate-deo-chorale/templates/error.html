@@ -1,0 +1,32 @@
+{#
+  =====================================================================
+  error.html - FRIENDLY ERROR PAGE (403 no access, 404 not found, etc.)
+  =====================================================================
+  Shown instead of the plain browser error. The wording for each error
+  lives in ERROR_PAGES in app.py.
+  Signed-in visitors see the first layout, signed-out visitors the second.
+#}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body_class %}page-error{% endblock %}
+
+{# Signed in #}
+{% block content %}
+  <section class="panel panel--wide">
+    <div class="empty">
+      <span class="error-code">{{ code }}</span>
+      <p class="empty__title">{{ title }}</p>
+      <p class="empty__text">{{ message }}</p>
+      <p class="error-actions"><a class="btn btn--outline" href="{{ url_for('dashboard') }}">Back to dashboard</a></p>
+    </div>
+  </section>
+{% endblock %}
+
+{# Signed out #}
+{% block auth_content %}
+  <section class="login-card login-card--setup" aria-label="{{ title }}">
+    <h2 class="login-card__title">{{ title }}</h2>
+    <p class="login-card__lead">{{ message }}</p>
+    <a class="btn btn--gold btn--block" href="{{ url_for('login') }}">Go to sign in</a>
+  </section>
+{% endblock %}

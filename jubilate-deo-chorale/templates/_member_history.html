@@ -1,0 +1,20 @@
+{#
+  Timeline of everything recorded about one member (newest first).
+  Included by member_detail.html and member_archive_detail.html.
+  The list is prepared by member_history() in app.py.
+#}
+{% if history %}
+  <ul class="log">
+    {% for entry in history %}
+      <li class="log__item">
+        <span class="log__dot" aria-hidden="true"></span>
+        <div>
+          <p class="log__title">{{ entry.label }}{% if entry.detail %}: <strong>{{ entry.detail }}</strong>{% endif %}</p>
+          <p class="log__meta">{% if entry.actor %}By {{ entry.actor }} &middot; {% endif %}{{ entry.when }}</p>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">No history recorded yet.</p>
+{% endif %}

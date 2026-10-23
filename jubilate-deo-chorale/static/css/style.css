@@ -1,0 +1,2260 @@
+/* =====================================================================
+   JUBILATE DEO CHORALE - STYLESHEET (style.css)
+
+   HOW TO USE THIS FILE
+   --------------------
+   Press Ctrl+F and search for one of the tags below to jump straight to
+   the part you want to change. Save the file, then refresh the browser
+   with Ctrl+F5.
+
+     [COLORS]            Change the main colours (burgundy, gold, charcoal)
+     [FONTS]             Change the fonts and text sizes
+     [LOGO]              Change the logo size or give it a background
+     [LOGIN BACKGROUND]  Change the login page background colour
+     [SPLASH]            Change the first screen: logo, tagline, round button
+     [LOGIN BOX]         Change the burgundy box that holds the sign-in form
+     [SIDEBAR]           Change the dashboard side menu
+     [BUTTONS]           Change button look
+     [FORMS]             Change the input boxes
+     [MESSAGES]          Change the green / red / grey notice boxes
+     [DASHBOARD]         Change the dashboard page as a whole
+     [SUMMARY CARDS]     Change the four number cards
+     [LISTS]             Change the upcoming activities and recent activity lists
+     [QUICK ACTIONS]     Change the four action buttons
+     [EMPTY STATES]      Change the "nothing here yet" messages
+     [MEMBERS TABLE]     Change the member table (and its phone card layout)
+     [BADGES]            Change the Active / Inactive status labels
+     [MEMBER FORM]       Change the add / edit member form fields
+     [PAGINATION]        Change the page buttons under the table
+     [PROFILE]           Change the member profile page
+     [MOBILE]            Change how pages look on phones and small screens
+     [DASHBOARD REDESIGN] / [MEMBERS REDESIGN]  The newer Dashboard and Members look (end of file)
+
+   TIP: The easiest changes are all in SECTION 1 just below. Most of the
+   time you will only need to edit the values there.
+   ===================================================================== */
+
+
+/* [FONTS] Libre Baskerville (SIL Open Font License), kept in static/fonts so nothing is loaded from another website.
+   If the files are missing the browser simply uses the next font in --font-display. */
+@font-face { font-family: "Libre Baskerville"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/libre-baskerville-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Libre Baskerville"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("../fonts/libre-baskerville-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Libre Baskerville"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url("../fonts/libre-baskerville-latin-400-italic.woff2") format("woff2"); }
+
+/* =====================================================================
+   SECTION 1 - SETTINGS YOU ARE MOST LIKELY TO CHANGE
+   Everything else in this file reads from these values.
+   ===================================================================== */
+:root {
+
+  /* ---------- [COLORS] ----------
+     Change a colour by replacing the code after the colon (e.g. #5C1226).
+     Tip: search "hex color picker" online to find codes you like. */
+  --burgundy-900: #3B0A18;   /* darkest burgundy: button pressed state */
+  --burgundy-800: #4A0E20;   /* dark burgundy: sidebar, button hover */
+  --burgundy-700: #5C1226;   /* MAIN burgundy: headings, buttons, login panel */
+  --burgundy-600: #74203A;   /* lighter burgundy */
+  --burgundy-100: #F3E6E9;   /* very pale pink: small highlights */
+  --gold-500: #B89B5E;       /* gold: thin lines, focus outlines, small accents */
+  --gold-300: #D8C79B;       /* light gold: tagline, small text on burgundy */
+  --charcoal-900: #2A2829;   /* main text colour */
+  --charcoal-700: #4A4647;   /* slightly lighter text */
+  --charcoal-500: #6F6A6B;   /* grey text (hints, dates) */
+  --line: #E6E1E1;           /* thin grey borders */
+  --surface: #FFFFFF;        /* white: cards and the login form side */
+  --page: #FAF9F9;           /* page background behind the cards */
+
+  /* ---------- [LOGIN BACKGROUND] ----------
+     The page behind the login and setup screens. */
+  --stage-bg: var(--surface);                /* white. Try #FAF9F9 for a soft off-white */
+  --keyline-color: rgba(184, 155, 94, 0.45); /* thin gold frame around the screen.
+                                                Set to transparent to hide it. */
+
+  /* ---------- [SPLASH] ----------
+     The first screen: logo, tagline and the round button. */
+  --tagline-color: var(--burgundy-700);      /* tagline text colour (shows on white) */
+  --note-btn-size: 4.5rem;                   /* diameter of the round button */
+  --note-btn-bg: var(--burgundy-700);        /* round button colour */
+  --note-btn-ring: var(--gold-500);          /* thin gold ring around the button */
+
+  /* ---------- [LOGIN BOX] ----------
+     The burgundy box that holds the sign-in form. */
+  --login-card-bg: var(--burgundy-700);      /* box colour */
+  --login-card-width: 26rem;                 /* box width on large screens */
+
+  /* ---------- [SIDEBAR] ----------
+     Background of the menu on the left after you sign in. */
+  --sidebar-bg: var(--burgundy-800);
+  --sidebar-bg-deep: #2B0A14;   /* the near-black burgundy the menu fades into at the bottom */
+  --ivory: #F5EFE6;             /* warm white for the current page and menu text */
+
+  /* ---------- [LOGO] sizes ----------
+     lg = login and setup pages, md = reserved, sm = dashboard sidebar.
+     Make the numbers bigger for a bigger logo. (1rem is about 16 pixels.) */
+  --logo-lg: 5.5rem;
+  --logo-xl: clamp(9rem, 40vmin, 17rem);   /* the BIG logo on the first login screen.
+                                              Format: smallest, flexible size, largest. */
+  --logo-md: 4rem;
+  --logo-sm: 2.75rem;
+
+  /* [LOGO] background behind your logo image (logo.png).
+     Default is no background. If a dark logo is hard to see on burgundy,
+     try:  --logo-bg: #FFFFFF;   --logo-padding: 0.35rem;   --logo-radius: 50%;
+     (white background, a little space around the logo, and a round shape) */
+  --logo-bg: transparent;
+  --logo-padding: 0;
+  --logo-radius: 0;
+
+  /* ---------- [FONTS] ----------
+     Display font = headings, the choir name, the tagline.
+     Body font    = everything else (forms, menus, paragraphs).
+     The browser tries the fonts from left to right and uses the first
+     one found on the computer. To try another font, put it first in the
+     list, e.g. "Garamond", Georgia, serif.
+     Fonts that come with Windows: Georgia, Palatino Linotype, Garamond,
+     Book Antiqua, Cambria (serif) and Segoe UI, Calibri, Arial (sans). */
+  --font-display: "Libre Baskerville", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-body: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* ---------- [FONTS] sizes ----------
+     Make these numbers bigger or smaller to resize text everywhere.
+     step-0 is normal paragraph text. step-3 is the page headline. */
+  --step--1: 0.875rem;   /* small text: hints, labels */
+  --step-0: 1rem;        /* normal text */
+  --step-1: 1.25rem;     /* small headings, tagline */
+  --step-2: 1.625rem;    /* medium headings */
+  --step-3: 2.125rem;    /* large headings */
+  --step-4: 2.75rem;     /* choir name on the login page (maximum size) */
+
+  /* ---------- Spacing and corners ---------- */
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+  --space-5: 1.5rem;  --space-6: 2rem;   --space-7: 3rem;    --space-8: 4.5rem;
+  --radius-s: 4px;    /* corner roundness of buttons and input boxes */
+  --radius-m: 8px;    /* corner roundness of dashboard cards */
+  --shadow-panel: 0 1px 2px rgba(42, 40, 41, 0.04), 0 8px 24px rgba(42, 40, 41, 0.05);
+  --sidebar-w: 17rem; /* width of the side menu on desktop */
+  --sidebar-rail-w: 4.75rem; /* width of the side menu when collapsed to icons (desktop) */
+  --content-max: 90rem; /* [DASHBOARD] widest the page content may grow. The content is
+                           centred, so on very wide screens the spare space is split evenly
+                           on both sides. Use a bigger number (e.g. 120rem) to fill more. */
+
+  /* Message box colours (see [MESSAGES]) */
+  --success-bg: #EEF5EF; --success-fg: #24512B; --success-line: #BFD8C3;
+  --error-bg:   #FBECEC; --error-fg:   #8A1F1F; --error-line:   #EBC3C3;
+  --info-bg:    #F4F1EC; --info-fg:    #4A4647; --info-line:    #E2D9C6;
+}
+
+
+/* =====================================================================
+   OPTIONAL: USE A CUSTOM FONT FILE (needs no internet)
+   1. Put your font file (for example MyFont.woff2) in static/fonts/
+   2. Copy the example below and paste it on a new line AFTER this
+      comment (not inside it). Change "MyFont" and the file name.
+   3. Put "MyFont" first in --font-display or --font-body in SECTION 1.
+
+   Example to copy:
+     @font-face {
+       font-family: "MyFont";
+       src: url("../fonts/MyFont.woff2") format("woff2");
+       font-weight: 400 700;
+       font-display: swap;
+     }
+   ===================================================================== */
+
+
+/* =====================================================================
+   SECTION 2 - BASE STYLES (page-wide defaults)
+   You rarely need to touch this part.
+   ===================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);   /* [FONTS] body text */
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--charcoal-900);      /* main text colour */
+  background: var(--page);         /* page background */
+}
+img { max-width: 100%; height: auto; display: block; }
+[hidden] { display: none !important; }   /* makes the "hidden" attribute always win */
+
+/* [FONTS] Headings use the display font and burgundy colour */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 var(--space-3);
+  color: var(--burgundy-700);
+}
+h1 { font-size: var(--step-3); }
+h2 { font-size: var(--step-1); }
+p { margin: 0 0 var(--space-4); }
+a { color: var(--burgundy-700); }
+code {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 0.9em;
+  background: var(--burgundy-100);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-s);
+}
+
+/* Text for screen readers only (hidden on screen) */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* The short gold line used under headings.
+   Change width for a longer line, or background for a different colour. */
+.rule {
+  display: block; width: 3.5rem; height: 1px;
+  background: var(--gold-500); margin: var(--space-5) 0;
+}
+.rule--dark { margin: var(--space-4) 0 0; }
+
+
+/* =====================================================================
+   SECTION 3 - COMPONENTS (reusable pieces)
+   ===================================================================== */
+
+/* ---------- [LOGO] ----------
+   Your logo is static/images/logo.png. Until it exists, a gold circle
+   with "JDC" is shown instead. Sizes are set in SECTION 1 above. */
+.logo { flex: none; }
+.logo--sm { width: var(--logo-sm); height: var(--logo-sm); }   /* dashboard sidebar */
+.logo--md { width: var(--logo-md); height: var(--logo-md); }
+.logo--lg { width: var(--logo-lg); height: var(--logo-lg); }
+.logo--xl { width: var(--logo-xl); height: var(--logo-xl); }   /* first login screen */
+
+/* Your real logo image. "contain" keeps it from being cropped or stretched.
+   Change to "cover" if you want it to fill the whole box (it may crop). */
+img.logo { object-fit: contain; }
+
+/* If your logo is dark and hard to see on the burgundy panel, give it a
+   background using the three --logo-... settings in SECTION 1 at the top
+   of this file. Nothing else needs to change here. */
+img.logo {
+  background: var(--logo-bg);
+  padding: var(--logo-padding);
+  border-radius: var(--logo-radius);
+}
+
+/* The placeholder circle (only shown when there is no logo.png) */
+.logo--placeholder {
+  display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--gold-500);      /* gold ring */
+  color: var(--gold-300);                 /* "JDC" letters */
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  box-shadow: inset 0 0 0 4px rgba(184, 155, 94, 0.12);
+}
+.logo--sm.logo--placeholder { font-size: 0.8rem; }
+.logo--md.logo--placeholder { font-size: 1.1rem; }
+.logo--lg.logo--placeholder { font-size: 1.5rem; }
+.logo--xl.logo--placeholder { font-size: 2.75rem; }
+
+/* ---------- [BUTTONS] ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 2.9rem;                     /* button height */
+  padding: 0 var(--space-5);
+  font: inherit; font-weight: 600; letter-spacing: 0.01em;
+  border-radius: var(--radius-s);         /* corner roundness */
+  border: 1px solid transparent;
+  cursor: pointer; text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn--block { width: 100%; }              /* full-width button */
+
+/* Main burgundy button (Sign in, Create administrator) */
+.btn--primary { background: var(--burgundy-700); color: #fff; }
+.btn--primary:hover { background: var(--burgundy-800); }   /* when mouse is over it */
+.btn--primary:active { background: var(--burgundy-900); }  /* while being clicked */
+
+/* Outlined button used on dark backgrounds (Sign out in the sidebar) */
+.btn--ghost-light {
+  background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.35);
+  min-height: 2.5rem; font-weight: 500;
+}
+.btn--ghost-light:hover { border-color: var(--gold-300); color: var(--gold-300); }
+
+/* Gold button used inside the burgundy login box */
+.btn--gold { background: var(--gold-500); color: var(--burgundy-900); }
+.btn--gold:hover { background: var(--gold-300); }
+.btn--gold:active { background: #A98C50; }
+
+/* ---------- [FORMS] (input boxes and labels) ---------- */
+.form { display: grid; gap: var(--space-5); }   /* space between fields */
+
+.field label {                                  /* small title above each box */
+  display: block; margin-bottom: var(--space-2);
+  font-size: var(--step--1); font-weight: 600; color: var(--charcoal-700);
+}
+.field input {                                  /* the typing box */
+  width: 100%; min-height: 2.9rem; padding: 0 var(--space-4);
+  font: inherit; color: var(--charcoal-900);
+  background: var(--surface); border: 1px solid #CFC8C8; border-radius: var(--radius-s);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field input:hover { border-color: var(--charcoal-500); }
+.field input:focus {                            /* when you click inside the box */
+  outline: none; border-color: var(--burgundy-700);
+  box-shadow: 0 0 0 3px rgba(184, 155, 94, 0.35);   /* soft gold glow */
+}
+.field__group { position: relative; }           /* password box + Show button */
+.field__group input { padding-right: 4.5rem; }
+.field__toggle {                                /* the "Show" / "Hide" button */
+  position: absolute; top: 50%; right: var(--space-2); transform: translateY(-50%);
+  padding: var(--space-1) var(--space-3);
+  font: inherit; font-size: var(--step--1); font-weight: 600;
+  color: var(--burgundy-700); background: none; border: 0; border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.field__toggle:hover { background: var(--burgundy-100); }
+.field__hint { margin: var(--space-2) 0 0; font-size: var(--step--1); color: var(--charcoal-500); }
+.field__hint--error { color: var(--error-fg); }
+
+/* ---------- [MESSAGES] (notice boxes such as "You have signed out") ----------
+   Colours for each type are set in SECTION 1 (--success, --error, --info). */
+.flashes { display: grid; gap: var(--space-3); margin-bottom: var(--space-5); }
+.flash {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--step--1);
+  border: 1px solid; border-radius: var(--radius-s);
+}
+.flash--success { background: var(--success-bg); color: var(--success-fg); border-color: var(--success-line); }
+.flash--error   { background: var(--error-bg);   color: var(--error-fg);   border-color: var(--error-line); }
+.flash--info    { background: var(--info-bg);    color: var(--info-fg);    border-color: var(--info-line); }
+.flash__close {                                 /* the small x button */
+  flex: none; background: none; border: 0; color: inherit; cursor: pointer;
+  font-size: 1.25rem; line-height: 1; padding: 0 var(--space-1); opacity: 0.7;
+}
+.flash__close:hover { opacity: 1; }
+
+
+/* =====================================================================
+   SECTION 4 - LOGIN AND SETUP SCREENS
+   [LOGIN BACKGROUND]  [SPLASH]  [LOGIN BOX]
+
+   How the login page works:
+     1. Visitors first see the SPLASH: logo, tagline, round music button.
+     2. Clicking or tapping the round button swaps it for the burgundy
+        LOGIN BOX with the sign-in form.
+   The page never scrolls (except on very short screens, see the end of
+   this section).
+   ===================================================================== */
+
+/* ---------- [LOGIN BACKGROUND] the screen behind everything ----------
+   Colour is --stage-bg in SECTION 1. */
+.auth {
+  display: flex; flex-direction: column;
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--stage-bg);
+}
+
+/* Thin gold frame around the whole screen.
+   Delete this block (or set --keyline-color to transparent) to hide it. */
+.auth::before {
+  content: ""; position: fixed; inset: var(--space-3);
+  border: 1px solid var(--keyline-color); pointer-events: none;
+}
+
+/* The centred area where the splash or the login box sits */
+.auth__stage {
+  flex: 1; display: grid; place-items: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+/* Small copyright line at the very bottom */
+.auth__legal {
+  margin: 0; padding: 0 var(--space-4) var(--space-5);
+  text-align: center; font-size: var(--step--1); color: var(--charcoal-500);
+}
+
+/* NO SCROLLING on the login page: the page is exactly one screen tall. */
+body.page-login { overflow: hidden; }
+body.page-login .auth { height: 100vh; height: 100dvh; overflow: hidden; }
+
+/* ---------- [SPLASH] the first screen ---------- */
+.splash {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: clamp(1rem, 3.5vh, 1.9rem);
+}
+
+/* When the button is pressed the splash fades away */
+.splash.is-leaving { animation: splash-out 0.3s ease-in forwards; }
+
+/* The logo. Size: --logo-xl in SECTION 1.
+   IN ANIMATION: it grows from small to full size while fading in.
+   To change it: 0.9s = how long it takes, scale(0.5) = starting size
+   (0.5 means half size; try 0.3 for a bigger zoom). */
+.splash__logo { animation: logo-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+/* On a white background the "JDC" placeholder needs a dark colour */
+.splash .logo--placeholder { color: var(--burgundy-700); }
+
+/* The tagline under the logo. Colour: --tagline-color in SECTION 1.
+   It appears 0.6 seconds after the logo (the 0.6s near the end). */
+.splash__tagline {
+  margin: 0; max-width: 22rem;
+  font-family: var(--font-display); font-style: italic;
+  font-size: clamp(1.1rem, 2.4vmin + 0.7rem, 1.5rem);
+  line-height: 1.4;
+  color: var(--tagline-color);
+  animation: fade-up 0.7s ease-out 0.6s backwards;
+}
+
+/* The ROUND BUTTON with the music note. Size/colour: SECTION 1.
+   It pops in after the tagline (the 1.1s near the end). */
+.note-btn {
+  position: relative;
+  display: grid; place-items: center;
+  width: var(--note-btn-size); height: var(--note-btn-size);
+  padding: 0; border: 0; border-radius: 50%;
+  background: var(--note-btn-bg);
+  box-shadow: 0 0 0 4px var(--stage-bg), 0 0 0 5px var(--note-btn-ring),
+              0 10px 24px rgba(92, 18, 38, 0.25);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  animation: pop-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.25) 1.1s backwards;
+}
+.note-btn:hover { transform: scale(1.07); background: var(--burgundy-800); }
+.note-btn:active { transform: scale(0.96); }
+
+/* Soft gold ring that gently pulses to show the button can be pressed.
+   Delete this block to remove the pulse. */
+.note-btn::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid var(--gold-500); pointer-events: none;
+  animation: ring-pulse 2.8s ease-out 2.4s infinite;
+}
+
+/* The icon inside the button. Your PNG icon uses this class.
+   Make 52% bigger (e.g. 65%) for a larger icon. */
+.note-btn__icon { width: 52%; height: 52%; object-fit: contain; }
+
+/* The temporary music note character shown until you add your own icon */
+.note-btn__fallback { font-size: calc(var(--note-btn-size) * 0.5); line-height: 1; color: var(--gold-300); }
+
+/* ---------- [LOGIN BOX] the burgundy box with the form ----------
+   Colour and width: --login-card-bg and --login-card-width in SECTION 1. */
+.login-card {
+  position: relative;
+  width: min(100%, var(--login-card-width));
+  padding: clamp(1.5rem, 4.5vh, 2.5rem) clamp(1.25rem, 6vw, 2.5rem);
+  background: var(--login-card-bg);
+  color: #fff;
+  border-radius: var(--radius-m);
+  box-shadow: 0 24px 60px rgba(59, 10, 24, 0.28);
+  animation: card-in 0.5s ease-out backwards;
+}
+
+/* Thin gold line just inside the box edge. Delete to remove. */
+.login-card::before {
+  content: ""; position: absolute; inset: 0.55rem;
+  border: 1px solid rgba(216, 199, 155, 0.35); border-radius: var(--radius-s);
+  pointer-events: none;
+}
+
+/* "WELCOME" heading. Remove text-transform for normal capital letters. */
+.login-card__title {
+  margin: 0 0 var(--space-2); color: #fff;
+  font-size: var(--step-2);
+  text-transform: uppercase; letter-spacing: 0.14em; text-align: center;
+}
+/* Line under the heading */
+.login-card__lead { margin: 0 0 var(--space-5); color: var(--gold-300); text-align: center; }
+
+/* Form parts inside the box: light text on burgundy, white typing boxes */
+.login-card .form { gap: var(--space-4); }
+.login-card .field label { color: rgba(255, 255, 255, 0.9); }
+.login-card .field input { border-color: transparent; }
+.login-card .field input:focus {
+  border-color: var(--gold-300);
+  box-shadow: 0 0 0 3px rgba(216, 199, 155, 0.45);
+}
+.login-card .field__hint { color: rgba(255, 255, 255, 0.72); }
+.login-card .field__hint--error { color: #FFD3D3; }
+.login-card .flashes { margin-bottom: var(--space-4); }
+
+/* The setup page has more fields, so its box is a little roomier */
+.login-card--setup { --login-card-width: 28rem; }
+
+/* ---------- Animations (used above) ---------- */
+@keyframes logo-in    { from { opacity: 0; transform: scale(0.5) translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fade-up    { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in     { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: none; } }
+@keyframes card-in    { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes splash-out { to   { opacity: 0; transform: scale(0.97); } }
+@keyframes ring-pulse { 0% { transform: scale(0.9); opacity: 0.7; } 100% { transform: scale(1.4); opacity: 0; } }
+
+/* VERY SHORT SCREENS (for example a phone turned sideways):
+   allow scrolling so the form can never be cut off. */
+@media (max-height: 520px) {
+  body.page-login { overflow-y: auto; }
+  body.page-login .auth { height: auto; min-height: 100dvh; overflow: visible; }
+}
+
+
+/* =====================================================================
+   SECTION 5 - [SIDEBAR] AND PAGE LAYOUT (after signing in)
+   ===================================================================== */
+
+/* Two columns: the side menu and the main content.
+   --sidebar-cur is the current menu width. It is the full width, or the narrow rail when the administrator has
+   collapsed the menu (the "sidebar-collapsed" class on <html>, set in base.html and app.js). */
+.shell {
+  display: grid; grid-template-columns: var(--sidebar-cur, var(--sidebar-w)) 1fr; min-height: 100vh;
+  transition: grid-template-columns 0.25s ease;
+}
+
+/* The side menu. Colour = --sidebar-bg in SECTION 1. */
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column;
+  padding: var(--space-5);
+  background:
+    radial-gradient(120% 60% at 0% 0%, rgba(184, 155, 94, 0.10) 0%, rgba(184, 155, 94, 0) 60%),
+    linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-deep) 100%);
+  border-right: 1px solid rgba(184, 155, 94, 0.28);   /* thin gold edge */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.35), 6px 0 24px rgba(0, 0, 0, 0.18);
+  color: var(--ivory);
+  scrollbar-width: thin; scrollbar-color: rgba(184, 155, 94, 0.35) transparent;
+}
+
+/* Logo and choir name at the top of the sidebar */
+.sidebar__brand {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding-bottom: var(--space-5); margin-bottom: var(--space-5);
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(184, 155, 94, 0.15), rgba(214, 190, 130, 0.7), rgba(184, 155, 94, 0.15)) 1;   /* gold line under the logo */
+}
+.sidebar__name { margin: 0; font-family: var(--font-display); font-size: calc(var(--step-1) * 0.88); line-height: 1.15; white-space: nowrap; }   /* Baskerville is a wide face: slightly smaller so the name never touches the collapse button */
+.sidebar__sub { margin: 0; font-size: var(--step--1); color: var(--gold-300); }
+.sidebar__brand .logo { flex: none; }
+.sidebar__titles { flex: 1; min-width: 0; }
+
+/* The two small square buttons in the brand row. Collapse = desktop only. Close (X) = phones and tablets only. */
+.sidebar__collapse, .sidebar__close {
+  flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0;
+  background: none; color: var(--gold-300); cursor: pointer;
+  border: 1px solid rgba(184, 155, 94, 0.45); border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sidebar__collapse:hover, .sidebar__close:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.sidebar__collapse .nav__icon, .sidebar__close .nav__icon { width: 1.1rem; height: 1.1rem; }
+.sidebar__collapse .nav__icon { transition: transform 0.25s ease; }
+.sidebar__close { display: none; }
+
+/* Menu links */
+.nav { display: grid; gap: var(--space-1); }
+.nav__item {
+  position: relative;
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: rgba(245, 239, 230, 0.82); text-decoration: none;
+  letter-spacing: 0.01em;
+  border-left: 2px solid transparent; border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+a.nav__item:hover, button.nav__item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }   /* mouse over */
+a.nav__item:hover .nav__icon, button.nav__item:hover .nav__icon { color: var(--gold-300); }
+.nav__item.is-active {                                                     /* current page: gold-washed bar with a gold edge */
+  background: linear-gradient(90deg, rgba(184, 155, 94, 0.26) 0%, rgba(184, 155, 94, 0.07) 100%);
+  color: #fff; font-weight: 600; border-left-color: var(--gold-500);
+  box-shadow: inset 0 0 0 1px rgba(184, 155, 94, 0.18);
+}
+.nav__item.is-active .nav__icon { color: var(--gold-300); }
+/* A menu item that is a button (the Action Center) looks exactly like the links */
+button.nav__item {
+  width: 100%; border: 0; border-left: 2px solid transparent; background: none;
+  font: inherit; text-align: left; cursor: pointer;
+}
+/* Icon and text of a menu item. The icon is all that remains when the menu is collapsed. */
+.nav__icon { width: 1.35rem; height: 1.35rem; flex: none; stroke-width: 1.6; }
+.nav__label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+/* Greyed-out "Soon" items. Delete these items in base.html to remove them. */
+.nav__item--soon { color: rgba(255, 255, 255, 0.4); cursor: default; }
+.nav__item--soon small {
+  flex: none; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Name, role and Sign out button at the bottom of the sidebar */
+/* Gold musical staff + motto between the menu and the profile. Hidden when the menu is collapsed. */
+.sidebar__motto {
+  margin-top: auto; padding: var(--space-5) var(--space-2) var(--space-4);
+  text-align: center; color: var(--gold-300); flex: none;
+}
+.sidebar__staff { display: block; width: 100%; max-width: 11.5rem; height: auto; margin: 0 auto var(--space-3); overflow: visible; }
+.sidebar__motto-text {
+  margin: 0; font-family: var(--font-display); font-style: italic; font-size: var(--step--1);
+  line-height: 1.5; color: var(--gold-300); letter-spacing: 0.02em;
+}
+@media (max-height: 640px) { .sidebar__motto { display: none; } }   /* short screens: keep room for the menu */
+
+.sidebar__foot { padding-top: var(--space-4); }
+
+.sidebar__user { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.sidebar__role { margin: 0 0 var(--space-4); font-size: var(--step--1); color: var(--gold-300); }
+.sidebar__avatar { display: none; }   /* the initials circle only appears when the menu is collapsed */
+
+.sidebar__signout { gap: var(--space-2); }
+.sidebar__signout .nav__icon { width: 1.15rem; height: 1.15rem; }
+.sidebar__signout .nav__label { flex: none; }
+
+/* ---------- COLLAPSED MENU (desktop only): a narrow rail with icons ----------
+   The labels are hidden but kept for screen readers; the tooltip text comes from data-label (app.js). */
+@media (min-width: 961px) {
+  html.sidebar-collapsed .shell { --sidebar-cur: var(--sidebar-rail-w); }
+  html.sidebar-collapsed .sidebar { padding-inline: var(--space-3); }
+  html.sidebar-collapsed .sidebar__brand { flex-direction: column; justify-content: center; gap: var(--space-3); }
+  html.sidebar-collapsed .sidebar__titles,
+  html.sidebar-collapsed .nav__label,
+  html.sidebar-collapsed .sidebar__user,
+  html.sidebar-collapsed .sidebar__role,
+  html.sidebar-collapsed .nav__item--soon small {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  html.sidebar-collapsed .sidebar__motto { display: none; }   /* staff + motto are hidden in the icon rail */
+  html.sidebar-collapsed .sidebar__foot { margin-top: auto; }
+  html.sidebar-collapsed .sidebar { overflow: visible; }      /* lets the tooltips escape the narrow rail */
+  html.sidebar-collapsed .sidebar__collapse .nav__icon { transform: rotate(180deg); }
+  /* Tooltips: pure CSS, text comes from each item's data-label. Shown on hover and keyboard focus. */
+  html.sidebar-collapsed .nav__item[data-label]::after,
+  html.sidebar-collapsed .sidebar__signout[data-label]::after,
+  html.sidebar-collapsed .sidebar__avatar[data-label]::after {
+    content: attr(data-label); position: absolute; left: calc(100% + 0.7rem); top: 50%;
+    transform: translate(-4px, -50%); z-index: 60; padding: 0.4rem 0.7rem; white-space: nowrap;
+    background: var(--burgundy-800); color: var(--ivory); font-size: var(--step--1); font-weight: 500;
+    border: 1px solid rgba(184, 155, 94, 0.55); border-radius: var(--radius-s);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  html.sidebar-collapsed .sidebar__signout, html.sidebar-collapsed .sidebar__avatar { position: relative; }
+  html.sidebar-collapsed .nav__item[data-label]:hover::after,
+  html.sidebar-collapsed .nav__item[data-label]:focus-visible::after,
+  html.sidebar-collapsed .sidebar__signout[data-label]:hover::after,
+  html.sidebar-collapsed .sidebar__signout[data-label]:focus-visible::after,
+  html.sidebar-collapsed .sidebar__avatar[data-label]:hover::after {
+    opacity: 1; visibility: visible; transform: translate(0, -50%);
+  }
+  html.sidebar-collapsed .nav__item { justify-content: center; padding-inline: 0; border-radius: var(--radius-s); }
+  html.sidebar-collapsed .nav__item { border-left-width: 0; box-shadow: inset 2px 0 0 transparent; }
+  html.sidebar-collapsed .nav__item.is-active { box-shadow: inset 2px 0 0 var(--gold-500); }
+  html.sidebar-collapsed .sidebar__foot { display: grid; justify-items: center; gap: var(--space-3); }
+  html.sidebar-collapsed .sidebar__foot form { width: 100%; }
+  html.sidebar-collapsed .sidebar__signout { padding-inline: 0; min-width: 0; }   /* icon only: fits the narrow rail */
+  html.sidebar-collapsed .sidebar__avatar {
+    display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+    border: 1px solid rgba(184, 155, 94, 0.55); background: rgba(255, 255, 255, 0.06);
+    color: var(--gold-300); font-family: var(--font-display); font-size: 0.9rem; font-weight: 600;
+  }
+}
+
+/* Main content area (right of the sidebar) */
+.shell__main { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: none; }   /* the phone-only top bar (shown in [MOBILE]) */
+.content {
+  flex: 1; width: 100%;
+  max-width: var(--content-max);   /* set in SECTION 1 */
+  margin-inline: auto;             /* centres the content so both sides are balanced */
+  padding: var(--space-7) var(--space-6);
+}
+
+/* Tagline at the very bottom of every signed-in page */
+.footer {
+  padding: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display); font-style: italic; color: var(--charcoal-500);
+}
+.footer p { margin: 0; }
+
+/* Dark overlay behind the phone menu */
+.scrim { position: fixed; inset: 0; background: rgba(42, 40, 41, 0.5); z-index: 40; }
+body.nav-lock { overflow: hidden; }   /* the page behind the open phone menu does not scroll */
+
+
+/* =====================================================================
+   SECTION 6 - [DASHBOARD]
+   Headline, number cards, lists, quick actions, account and empty states.
+   Colours come from SECTION 1. Spacing uses the --space-... values, so
+   every card has the same gaps.
+   ===================================================================== */
+
+/* Headline area: date and greeting */
+.page-head { margin-bottom: var(--space-6); }
+.page-head__date { margin: 0 0 var(--space-2); font-size: var(--step--1); color: var(--charcoal-500); }
+.page-head h1 { margin: 0; }   /* "Peace be with you, ..." */
+
+/* A single white card. Used for every box on the dashboard. */
+.panel {
+  padding: var(--space-5) var(--space-6);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-panel);
+}
+.panel p:last-child { margin-bottom: 0; }
+.panel--wide { margin-bottom: var(--space-5); }          /* full-width cards */
+.panel--empty { border-style: dashed; box-shadow: none; background: transparent; }  /* logo reminder */
+
+/* Title row inside a card: heading on the left, small note on the right */
+.panel__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+  margin-bottom: var(--space-4); padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.panel__head h2 { margin: 0; }
+.panel__meta { font-size: var(--step--1); color: var(--charcoal-500); white-space: nowrap; }
+
+/* ---------- [SUMMARY CARDS] the four number cards ----------
+   4 across on desktop, 2 across on tablets, 1 on small phones (see SECTION 7). */
+.stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5); margin-bottom: var(--space-5);
+}
+.stat {
+  padding: var(--space-5);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-panel);
+}
+/* The short gold line at the top of each card */
+.stat::before {
+  content: ""; display: block; width: 1.75rem; height: 2px;
+  background: var(--gold-500); margin-bottom: var(--space-4);
+}
+.stat__label {
+  margin: 0; font-size: var(--step--1); font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--charcoal-700);
+}
+.stat__value {                                   /* the big number */
+  margin: var(--space-2) 0; line-height: 1;
+  font-family: var(--font-display); font-size: clamp(2rem, 3vw, 2.5rem);
+  color: var(--burgundy-700);
+}
+.stat__note { margin: 0; font-size: var(--step--1); color: var(--charcoal-500); }
+/* "—" when that feature is not built yet: softer so it is not mistaken for a count */
+.stat--missing .stat__value { color: var(--charcoal-500); opacity: 0.55; }
+
+/* ---------- Two columns: upcoming (left) and recent (right) ---------- */
+.dash-cols {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--space-5); margin-bottom: var(--space-5);
+}
+
+/* ---------- [LISTS] upcoming activities ---------- */
+.events, .log { margin: 0; padding: 0; list-style: none; }
+.event { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: var(--space-4); align-items: center; padding: var(--space-3) 0; }
+.event + .event, .log__item + .log__item { border-top: 1px solid var(--line); }
+.event:first-child { padding-top: 0; }
+
+.event__date {                                   /* the little calendar tile */
+  display: grid; justify-items: center; padding: var(--space-2) 0;
+  border: 1px solid var(--line); border-top: 2px solid var(--gold-500);
+  border-radius: var(--radius-s); line-height: 1.1; text-align: center;
+}
+.event__month { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; color: var(--charcoal-500); }
+.event__day { font-family: var(--font-display); font-size: var(--step-1); color: var(--burgundy-700); }
+.event__title { margin: 0; font-weight: 600; color: var(--charcoal-900); overflow-wrap: anywhere; }
+.event__meta { display: flex; flex-wrap: wrap; margin: 0; font-size: var(--step--1); color: var(--charcoal-500); }
+.event__meta span + span::before { content: "\00b7"; margin: 0 var(--space-2); }   /* the dot between date, time, place */
+
+/* ---------- [LISTS] recent activity ---------- */
+.log__item { display: grid; grid-template-columns: 0.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) 0; }
+.log__item:first-child { padding-top: 0; }
+.log__dot { width: 0.4rem; height: 0.4rem; margin-top: 0.55em; border-radius: 50%; background: var(--gold-500); }
+.log__title { margin: 0; color: var(--charcoal-900); overflow-wrap: anywhere; }
+.log__meta { margin: 0; font-size: var(--step--1); color: var(--charcoal-500); }
+
+/* ---------- [QUICK ACTIONS] ----------
+   4 across on desktop, 2 across on tablets, 1 on phones (see SECTION 7). */
+.actions {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4); margin: 0; padding: 0; list-style: none;
+}
+.actions > li { display: flex; }
+.action {
+  flex: 1; display: flex; flex-direction: column; gap: var(--space-1);
+  padding: var(--space-4); text-decoration: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-s);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+a.action:hover { border-color: var(--burgundy-700); background: var(--burgundy-100); }
+.action__label { font-weight: 600; color: var(--burgundy-700); }
+.action__hint { font-size: var(--step--1); color: var(--charcoal-500); }
+/* Actions whose page does not exist yet: greyed out, not clickable */
+.action--off { background: var(--page); border-style: dashed; cursor: not-allowed; }
+.action--off .action__label { color: var(--charcoal-500); }
+.action__tag {
+  align-self: flex-start; margin-top: var(--space-2);
+  padding: 0.1rem var(--space-2); border: 1px solid var(--line); border-radius: 99px;
+  font-size: 0.7rem; color: var(--charcoal-500);
+}
+
+/* ---------- [EMPTY STATES] "nothing here yet" messages ---------- */
+.empty { display: grid; justify-items: center; padding: var(--space-6) var(--space-4); text-align: center; }
+.empty__mark { display: block; width: 2rem; height: 1px; background: var(--gold-500); margin-bottom: var(--space-4); }
+.empty__title { margin: 0 0 var(--space-1); font-family: var(--font-display); font-size: var(--step-1); color: var(--burgundy-700); }
+.empty__text { margin: 0; max-width: 24rem; font-size: var(--step--1); color: var(--charcoal-500); }
+
+/* ---------- "Your account" details ---------- */
+.facts { margin: 0; display: grid; gap: var(--space-3); }
+.facts div { display: grid; grid-template-columns: 5rem 1fr; gap: var(--space-3); }
+.facts dt { color: var(--charcoal-500); font-size: var(--step--1); padding-top: 0.15rem; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+/* Side by side on large screens (name | email | role) */
+.facts--row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+.facts--row div { grid-template-columns: 1fr; gap: var(--space-1); }
+
+
+/* =====================================================================
+   SECTION 6B - MEMBERS MODULE
+   [MEMBERS TABLE] [BADGES] [MEMBER FORM] [PAGINATION] [PROFILE]
+   Reuses the colours and spacing from SECTION 1. Its own phone / tablet
+   rules are at the end of this section.
+   ===================================================================== */
+
+/* Page title row with a button on the right (Members page) */
+.page-head--split { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.page-head__lead { margin: var(--space-2) 0 0; max-width: 40rem; color: var(--charcoal-500); }
+.back-link { color: var(--charcoal-500); text-decoration: none; }
+.back-link:hover { color: var(--burgundy-700); text-decoration: underline; }
+
+/* Extra button styles used on white pages */
+.btn--outline { background: var(--surface); color: var(--burgundy-700); border-color: var(--burgundy-700); }
+.btn--outline:hover { background: var(--burgundy-100); }
+.btn--sm { min-height: 2.25rem; padding: 0 var(--space-4); font-size: var(--step--1); }
+
+/* Small text-style buttons and links (table actions) */
+.link-action {
+  background: none; border: 0; padding: 0; font: inherit; font-size: var(--step--1); font-weight: 600;
+  color: var(--burgundy-700); text-decoration: none; cursor: pointer;
+}
+.link-action:hover { text-decoration: underline; }
+form.inline { display: inline; margin: 0; }
+.muted { color: var(--charcoal-500); }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.9em; color: var(--charcoal-700); }
+
+/* Title row with tools on the right (count + Export button) */
+.panel__tools { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.panel__tools form { margin: 0; }
+
+/* ---------- Search and filters ---------- */
+.toolbar {
+  display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: var(--space-4); align-items: end;
+}
+.toolbar__actions { display: flex; gap: var(--space-2); }
+
+/* ---------- [MEMBERS TABLE] ---------- */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  padding: var(--space-2) var(--space-3); text-align: left; white-space: nowrap;
+  font-size: var(--step--1); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--charcoal-500); border-bottom: 1px solid var(--line);
+}
+.table td { padding: var(--space-3); vertical-align: middle; border-bottom: 1px solid var(--line); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: var(--page); }
+.table__name { display: flex; align-items: center; gap: var(--space-3); font-weight: 600; }
+.table__name a { color: var(--burgundy-700); text-decoration: none; overflow-wrap: break-word; min-width: 0; }
+.table__name a:hover { text-decoration: underline; }
+.table__actions { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: var(--space-3); white-space: nowrap; }   /* View / Edit / Deactivate stay on one line */
+.table td.td--primary { min-width: 11rem; }                  /* keeps the name readable; the table scrolls sideways instead of squeezing it */
+
+/* Round picture or initials */
+.avatar {
+  flex: none; display: grid; place-items: center; overflow: hidden;
+  width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  background: var(--burgundy-100); color: var(--burgundy-700); border: 1px solid var(--line);
+  font-family: var(--font-display); font-size: 0.9rem; font-weight: 600;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar--lg { width: 5.5rem; height: 5.5rem; font-size: 1.75rem; }
+.avatar__hint { font-family: var(--font-body); font-size: 0.7rem; font-weight: 400; color: var(--charcoal-500); }
+
+/* ---------- [BADGES] [MEMBERSHIP STATUS] colours ----------
+   Each membership status has ONE rule below named  .badge--<status code>  (for example
+   .badge--active). Change the colours here. If a status is ever added or renamed in app.py
+   (MEMBER_STATUSES), add or rename its rule here too. */
+.badge {
+  display: inline-block; padding: 0.15rem var(--space-3); border: 1px solid; border-radius: 99px;
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+}
+.badge--active { background: var(--success-bg); color: var(--success-fg); border-color: var(--success-line); }
+.badge--temporarily_inactive { background: #FAF5E8; color: #6B5214; border-color: var(--gold-300); }
+.badge--inactive { background: #F1EFEF; color: var(--charcoal-700); border-color: #DDD8D8; }
+
+/* ---------- [PAGINATION] ---------- */
+.pagination {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3);
+  margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line);
+}
+.pagination__info { margin: 0; font-size: var(--step--1); color: var(--charcoal-500); }
+.pagination__list { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.page-link {
+  display: grid; place-items: center; min-width: 2.25rem; height: 2.25rem; padding: 0 var(--space-3);
+  border: 1px solid var(--line); border-radius: var(--radius-s);
+  font-size: var(--step--1); color: var(--charcoal-700); text-decoration: none; background: var(--surface);
+}
+a.page-link:hover { border-color: var(--burgundy-700); color: var(--burgundy-700); }
+.page-link--current { background: var(--burgundy-700); border-color: var(--burgundy-700); color: #fff; }
+.page-link--disabled, .page-link--gap { opacity: 0.45; }
+.page-link--gap { border-color: transparent; background: none; }
+
+/* ---------- [MEMBER FORM] ---------- */
+.field select, .field textarea {
+  width: 100%; font: inherit; color: var(--charcoal-900);
+  background: var(--surface); border: 1px solid #CFC8C8; border-radius: var(--radius-s);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field select { min-height: 2.9rem; padding: 0 var(--space-4); }
+.field textarea { padding: var(--space-3) var(--space-4); min-height: 7rem; resize: vertical; }
+.field select:hover, .field textarea:hover { border-color: var(--charcoal-500); }
+.field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--burgundy-700); box-shadow: 0 0 0 3px rgba(184, 155, 94, 0.35);
+}
+.field input[type="file"] { padding: var(--space-2) var(--space-3); }
+.field input[type="checkbox"] { width: auto; min-height: 0; padding: 0; }
+
+/* A field with a problem turns red and shows its message */
+.field--error input, .field--error select, .field--error textarea { border-color: var(--error-fg); }
+.field__error { margin: var(--space-2) 0 0; font-size: var(--step--1); color: var(--error-fg); }
+
+.field__label { display: block; margin-bottom: var(--space-2); font-size: var(--step--1); font-weight: 600; color: var(--charcoal-700); }
+.req { color: var(--burgundy-700); }
+.optional { font-weight: 400; color: var(--charcoal-500); }
+.readonly { margin: 0; color: var(--charcoal-700); }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.field--full { grid-column: 1 / -1; }
+.form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); margin-bottom: var(--space-5); }
+
+.photo-field { display: flex; align-items: flex-start; gap: var(--space-5); }
+.photo-field__controls { flex: 1; min-width: 0; }
+
+.checkbox { display: flex; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-3); font-size: var(--step--1); cursor: pointer; }
+.checkbox input { margin-top: 0.2rem; }
+
+/* Possible-duplicate warning */
+.dup__title { margin: 0 0 var(--space-2); font-weight: 600; }
+.dup__list { margin: 0 0 var(--space-2); padding-left: var(--space-5); }
+
+/* ---------- [PROFILE] ---------- */
+.profile__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
+.profile__name { margin: 0; }
+.profile__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: var(--space-2) 0 0; }
+.profile__actions { margin-left: auto; }
+.stack { display: grid; gap: var(--space-5); align-content: start; }
+.details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); margin: 0; }
+.details--single { grid-template-columns: 1fr; }
+.details dt { font-size: var(--step--1); color: var(--charcoal-500); }
+.details dd { margin: var(--space-1) 0 0; overflow-wrap: anywhere; }
+.notes { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.status-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+.status-actions form { margin: 0; }
+
+/* ---------- Delete / Archive ---------- */
+.page-head__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.toolbar--archive { grid-template-columns: minmax(0, 1fr) auto; }
+.archive-notice { margin-bottom: var(--space-5); }
+
+/* Red buttons for destructive actions */
+.btn--danger { background: var(--error-fg); color: #fff; border-color: var(--error-fg); }
+.btn--danger:hover { background: #6E1818; border-color: #6E1818; }
+.btn--danger-outline { background: var(--surface); color: var(--error-fg); border-color: var(--error-fg); }
+.btn--danger-outline:hover { background: var(--error-bg); }
+.link-action--danger { color: var(--error-fg); }
+
+/* The "Delete permanently" box: a red-edged card so it is not mistaken for a normal one */
+.danger-zone { border-color: var(--error-line); border-left: 3px solid var(--error-fg); }
+.danger-zone .panel__head h2 { color: var(--error-fg); }
+.danger-zone__action { margin: var(--space-4) 0 0; }
+
+/* "In archive" label next to a member's name */
+.badge--archived { background: var(--surface); color: var(--charcoal-700); border-color: var(--charcoal-500); border-style: dashed; }
+
+/* One-time login details box (shown to the administrator right after a password is generated) */
+.credentials {
+  position: relative; margin-bottom: var(--space-5); padding: var(--space-5) var(--space-6);
+  background: var(--burgundy-700); color: #fff; border-radius: var(--radius-m);
+  box-shadow: 0 16px 40px rgba(59, 10, 24, 0.25);
+}
+.credentials::before {                       /* thin gold line just inside the edge */
+  content: ""; position: absolute; inset: 0.5rem; pointer-events: none;
+  border: 1px solid rgba(216, 199, 155, 0.35); border-radius: var(--radius-s);
+}
+.credentials h2 { margin: 0 0 var(--space-2); color: #fff; }
+.credentials__warn { margin: 0 0 var(--space-4); color: var(--gold-300); }
+.credentials__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: 0 0 var(--space-4); }
+.credentials__list dt { font-size: var(--step--1); color: rgba(255, 255, 255, 0.75); }
+.credentials__list dd { margin: var(--space-1) 0 0; }
+.credentials code {                          /* the Member ID and password themselves */
+  display: inline-block; padding: var(--space-2) var(--space-4);
+  background: #fff; color: var(--burgundy-900); border-radius: var(--radius-s);
+  font-family: Consolas, "Cascadia Mono", monospace; font-size: 1.35rem; letter-spacing: 0.12em;
+  user-select: all;
+}
+.login-note { margin: var(--space-4) 0 0; font-size: var(--step--1); }
+
+/* Empty-state extras and the error page */
+.empty__action { margin: var(--space-4) 0 0; }
+.error-code { font-family: var(--font-display); font-size: var(--step-4); line-height: 1; color: var(--gold-500); margin-bottom: var(--space-3); }
+.error-actions { margin: var(--space-5) 0 0; }
+
+/* ---------- Members on tablets and phones ---------- */
+@media (max-width: 1100px) {
+  .toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .toolbar__search { grid-column: 1 / -1; }          /* search box gets its own row */
+  .toolbar__actions { grid-column: 1 / -1; }
+}
+
+/* ROSTER (members and archive): cards from 1400px down, because the sidebar takes a third of the screen.
+   Same look as the phone cards below, but only for tables marked class="table table--roster". */
+@media (max-width: 1400px) {
+  .table--roster thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .table--roster, .table--roster tbody, .table--roster tr, .table--roster td { display: block; width: 100%; }
+  .table--roster tr {
+    margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--surface);
+  }
+  .table--roster tbody tr:hover { background: var(--surface); }
+  .table--roster td {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-2) 0; border-bottom: 1px solid var(--line); text-align: right;
+  }
+  .table--roster td:last-child { border-bottom: 0; }
+  .table--roster td::before {
+    content: attr(data-label); flex: none; text-align: left;
+    font-size: var(--step--1); color: var(--charcoal-500);
+  }
+  .table--roster td.td--primary { justify-content: flex-start; padding-top: 0; text-align: left; min-width: 0; }
+  .table--roster td.td--primary::before { display: none; }
+  .table--roster .table__actions { justify-content: flex-end; }
+}
+
+/* PHONES: each table row becomes a small card, with the column name beside each value */
+@media (max-width: 760px) {
+  .toolbar { grid-template-columns: 1fr; }
+  .form-grid, .details { grid-template-columns: 1fr; }
+  .photo-field { flex-direction: column; }
+  .form-actions .btn { flex: 1; }
+
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+  .table tr {
+    margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--surface);
+  }
+  .table tbody tr:hover { background: var(--surface); }
+  .table td {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-2) 0; border-bottom: 1px solid var(--line); text-align: right;
+  }
+  .table td:last-child { border-bottom: 0; }
+  .table td::before {
+    content: attr(data-label); flex: none; text-align: left;
+    font-size: var(--step--1); color: var(--charcoal-500);
+  }
+  .table td.td--primary { justify-content: flex-start; padding-top: 0; text-align: left; }
+  .table td.td--primary::before { display: none; }       /* the name needs no label */
+  .table__actions { justify-content: flex-end; }
+
+  .credentials__list { grid-template-columns: 1fr; }
+  .profile__actions { margin-left: 0; width: 100%; }
+  .profile__actions .btn { width: 100%; }
+}
+
+
+/* =====================================================================
+   SECTION 7 - [MOBILE] (tablets and phones)
+   Rules inside "@media (max-width: ...)" only apply on screens narrower
+   than that number of pixels.
+   ===================================================================== */
+
+/* Tablets and small laptops (960 pixels wide or less) */
+@media (max-width: 960px) {
+  /* Dashboard: sidebar becomes a slide-in menu (always the full menu, never the icon rail).
+     While closed it is also hidden from the Tab key and screen readers (visibility). */
+  .shell { grid-template-columns: 1fr; transition: none; }
+  .sidebar {
+    position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; width: min(var(--sidebar-w), 85vw);
+    transform: translateX(-100%); visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+    box-shadow: 12px 0 40px rgba(26, 6, 13, 0.35);
+  }
+  .sidebar.is-open { transform: translateX(0); visibility: visible; transition: transform 0.25s ease; }
+  .sidebar__collapse { display: none; }   /* collapsing to a rail is a desktop feature */
+  .sidebar__close { display: grid; }
+
+  /* The burgundy bar at the top of phone screens (with the menu button) */
+  .topbar {
+    display: flex; align-items: center; gap: var(--space-3);
+    position: sticky; top: 0; z-index: 30;
+    padding: var(--space-3) var(--space-4);
+    background: var(--burgundy-700); color: #fff;
+  }
+  .topbar__title { margin: 0; font-family: var(--font-display); font-size: var(--step-1); }
+  .content { padding: var(--space-6) var(--space-4); }
+  .footer { padding: var(--space-5) var(--space-4); }
+}
+
+/* Dashboard on tablets (1100 pixels wide or less) */
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* 4 cards become 2 + 2 */
+  .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Upcoming and recent stack on top of each other (960 pixels wide or less) */
+@media (max-width: 960px) {
+  .dash-cols { grid-template-columns: 1fr; }
+}
+
+/* The three-line menu button (hidden on large screens) */
+@media (min-width: 961px) {
+  .menu-btn { display: none; }
+}
+.menu-btn {
+  width: 2.75rem; height: 2.75rem; display: grid; place-items: center;
+  background: none; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.menu-btn__bars, .menu-btn__bars::before, .menu-btn__bars::after {
+  display: block; width: 1.2rem; height: 2px; background: #fff; content: ""; position: relative;
+}
+.menu-btn__bars::before { position: absolute; top: -6px; }
+.menu-btn__bars::after  { position: absolute; top: 6px; }
+
+/* Phones (640 pixels wide or less) */
+@media (max-width: 640px) {
+  h1 { font-size: var(--step-2); }
+  .panel { padding: var(--space-5); }
+  .facts--row { grid-template-columns: 1fr; }   /* name, email, role stack */
+  .actions { grid-template-columns: 1fr; }      /* action buttons stack */
+}
+
+/* Small phones (480 pixels wide or less): number cards stack one per row */
+@media (max-width: 480px) {
+  .stats { grid-template-columns: 1fr; }
+}
+
+
+/* =====================================================================
+   SECTION 8 - ACCESSIBILITY (keyboard and screen-reader helpers)
+   Leave this section as it is.
+   ===================================================================== */
+:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }   /* gold outline when using Tab key */
+.sidebar :focus-visible, .login-card :focus-visible, .topbar :focus-visible { outline-color: var(--gold-300); }
+.skip-link {
+  position: absolute; left: var(--space-3); top: -4rem; z-index: 100;
+  padding: var(--space-3) var(--space-4); background: var(--charcoal-900); color: #fff;
+  border-radius: var(--radius-s);
+}
+.skip-link:focus { top: var(--space-3); }
+
+/* Turns off animations for people who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+/* [FORGOT PASSWORD] Links under the form in the burgundy login box */
+.login-card__forgot { margin: calc(var(--space-2) * -1) 0 0; text-align: right; font-size: var(--step--1); }
+.login-card__forgot a, .login-card__back a { color: var(--gold-300); text-decoration: underline; text-underline-offset: 3px; }
+.login-card__forgot a:hover, .login-card__back a:hover { color: #fff; }
+.login-card__back { margin: var(--space-4) 0 0; text-align: center; font-size: var(--step--1); }
+
+/* [MANAGE CHOICES] Inline "add a new voice section / position" box on the member form */
+.inline-add { margin-top: var(--space-3); }
+.inline-add__row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.inline-add__row input { flex: 1 1 12rem; }
+/* [MANAGE CHOICES] The voice sections & positions page */
+.choice-rename { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin: 0; }
+.choice-rename input { max-width: 16rem; min-height: 2.25rem; }
+.choice-add { display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap; margin-top: var(--space-4); }
+.choice-add .field { flex: 1 1 14rem; }
+
+/* PASTE THIS AT THE VERY END of static/css/style.css (keep everything already there). */
+
+/* [FORGOT PASSWORD] Links under the form in the burgundy login box */
+.login-card__forgot { margin: calc(var(--space-2) * -1) 0 0; text-align: right; font-size: var(--step--1); }
+.login-card__forgot a, .login-card__back a { color: var(--gold-300); text-decoration: underline; text-underline-offset: 3px; }
+.login-card__forgot a:hover, .login-card__back a:hover { color: #fff; }
+.login-card__back { margin: var(--space-4) 0 0; text-align: center; font-size: var(--step--1); }
+
+/* [MANAGE CHOICES] Inline "add a new voice section / position" box on the member form */
+.inline-add { margin-top: var(--space-3); }
+.inline-add__row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.inline-add__row input { flex: 1 1 12rem; }
+/* [MANAGE CHOICES] The voice sections & positions page */
+.choice-rename { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin: 0; }
+.choice-rename input { max-width: 16rem; min-height: 2.25rem; }
+.choice-add { display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap; margin-top: var(--space-4); }
+.choice-add .field { flex: 1 1 14rem; }
+
+/* =====================================================================
+   [SCHEDULE] Schedule & Activities (calendar, list, form, detail)
+   Used by the administrator menu AND the member menu, so it only uses colours from SECTION 1.
+   Category colours: change the two numbers (text, background) of a .cat--<code> rule.
+   ===================================================================== */
+
+/* Category colours (the word is always written too, so colour is never the only clue) */
+.cat {
+  --cat-fg: var(--charcoal-700); --cat-bg: #F1EFEF;
+  display: inline-block; padding: 0.1rem var(--space-3); border-radius: 99px;
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  color: var(--cat-fg); background: var(--cat-bg);
+}
+.cat--rehearsal  { --cat-fg: var(--burgundy-700); --cat-bg: var(--burgundy-100); }
+.cat--liturgical { --cat-fg: #6B5214;             --cat-bg: #FAF5E8; }
+.cat--meeting    { --cat-fg: #2F4A5E;             --cat-bg: #E8EEF2; }
+.cat--formation  { --cat-fg: var(--success-fg);   --cat-bg: var(--success-bg); }
+.cat--fellowship { --cat-fg: #8A3B12;             --cat-bg: #FBEDE4; }
+.cat--parish     { --cat-fg: #1F5B5B;             --cat-bg: #E5F1F0; }
+.cat--other      { --cat-fg: var(--charcoal-700); --cat-bg: #F1EFEF; }
+
+/* Calendar + upcoming panel side by side; they stack on tablets */
+.sch-layout { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--space-5); align-items: start; }
+.sch-main .panel__head { flex-wrap: wrap; gap: var(--space-3); }
+.sch-main .panel__head h2 { margin-right: auto; }
+.toolbar__extra { grid-column: 1 / -1; margin: 0; }
+
+/* Month arrows and the Calendar / List switch */
+.sch-nav { display: inline-flex; align-items: center; gap: var(--space-2); }
+.sch-nav a { padding: 0 var(--space-3); font-size: var(--step-1); line-height: 1.6; text-decoration: none; color: var(--burgundy-700); border-radius: var(--radius-s); }
+.sch-nav a:hover { background: var(--burgundy-100); }
+.sch-nav .sch-nav__today { font-size: var(--step--1); border: 1px solid var(--line); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.seg__item { padding: 0.25rem var(--space-4); font-size: var(--step--1); text-decoration: none; color: var(--charcoal-700); }
+.seg__item:hover { background: var(--burgundy-100); }
+.seg__item.is-active { background: var(--burgundy-700); color: #fff; }
+
+/* The month grid */
+.sch-cal { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.sch-cal th { padding: var(--space-2) 0; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--charcoal-500); text-align: left; }
+.sch-cal__day { height: 6.5rem; padding: var(--space-1) var(--space-2); vertical-align: top; border: 1px solid var(--line); overflow: hidden; }
+.sch-cal__day--other { background: var(--page); }
+.sch-cal__day--other .sch-cal__num { opacity: 0.4; }
+.sch-cal__day--today { box-shadow: inset 0 0 0 2px var(--burgundy-700); }
+.sch-cal__day--today .sch-cal__num { background: var(--burgundy-700); color: #fff; }
+.sch-cal__num { display: inline-block; min-width: 1.6rem; padding: 0 0.3rem; margin-bottom: 2px; text-align: center; font-size: var(--step--1); font-weight: 600; line-height: 1.6rem; border-radius: 99px; color: var(--charcoal-900); text-decoration: none; }
+a.sch-cal__num:hover { background: var(--burgundy-100); }
+.sch-cal__day--today a.sch-cal__num:hover { background: var(--burgundy-800); }
+.sch-chip {
+  display: block; margin-top: 2px; padding: 1px var(--space-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 0.72rem; text-decoration: none; border-left: 3px solid var(--cat-fg); border-radius: 3px;
+  color: var(--cat-fg); background: var(--cat-bg);
+}
+.sch-chip:hover { filter: brightness(0.95); text-decoration: underline; }
+.sch-chip--cancelled { text-decoration: line-through; opacity: 0.6; }
+.sch-more { display: block; margin-top: 2px; font-size: 0.72rem; color: var(--charcoal-500); }
+.sch-cal__none { margin: var(--space-3) 0 0; }
+
+/* Lists of activities (list view, phone agenda, Upcoming panel) */
+.sch-list { margin: 0; padding: 0; list-style: none; }
+.sch-row { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) auto; gap: var(--space-4); align-items: start; padding: var(--space-4) 0; border-top: 1px solid var(--line); }
+.sch-row:first-child { border-top: 0; padding-top: 0; }
+.sch-row .event__title a { color: var(--burgundy-700); text-decoration: none; }
+.sch-row .event__title a:hover { text-decoration: underline; }
+.sch-row__tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; }
+.sch-aud { font-size: var(--step--1); color: var(--charcoal-500); overflow-wrap: anywhere; }
+.sch-row__actions { display: flex; gap: var(--space-3); }
+.sch-row--cancelled .event__title a { text-decoration: line-through; color: var(--charcoal-500); }
+.sch-row--cancelled .event__date { opacity: 0.55; }
+.sch-list--compact .sch-row { grid-template-columns: 3.4rem minmax(0, 1fr); padding: var(--space-3) 0; }
+.sch-key { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-5) 0 0; }
+.sch-agenda { display: none; margin-top: var(--space-5); }
+.sch-agenda__title { margin: 0 0 var(--space-3); font-size: var(--step-0); }
+
+/* Add / edit form */
+.sch-checks { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-top: var(--space-3); }
+.sch-checks .checkbox { margin-top: 0; }
+.sch-members summary { cursor: pointer; font-weight: 600; color: var(--burgundy-700); }
+.sch-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--space-1) var(--space-4); max-height: 16rem; overflow-y: auto; margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.sch-picks .checkbox { margin-top: 0; }
+
+/* One activity */
+.sch-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0 0 var(--space-5); }
+.sch-facts dt { font-size: var(--step--1); color: var(--charcoal-500); }
+.sch-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.sch-sub { margin: 0 0 var(--space-2); font-size: var(--step-0); }
+.sch-text { margin: 0 0 var(--space-3); white-space: pre-wrap; overflow-wrap: anywhere; }
+.sch-meta { margin: var(--space-4) 0 0; font-size: var(--step--1); }
+.sch-notice { margin-bottom: var(--space-5); padding: var(--space-3) var(--space-4); border: 1px solid var(--error-line); border-radius: var(--radius-s); background: var(--error-bg); color: var(--error-fg); }
+.sch-cancel { display: grid; gap: var(--space-3); max-width: 32rem; }
+
+/* Tablets: Upcoming goes under the calendar; four facts become two + two */
+@media (max-width: 1100px) {
+  .sch-layout { grid-template-columns: minmax(0, 1fr); }
+  .sch-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Phones: the grid shows coloured dots (details are in the list under it), actions go below each row */
+@media (max-width: 700px) {
+  .sch-cal__day { height: 3.4rem; padding: 2px; text-align: center; }
+  .sch-cal__num { margin-bottom: 0; }
+  .sch-chip { display: inline-block; width: 0.5rem; height: 0.5rem; margin: 1px; padding: 0; border: 0; border-radius: 50%; background: var(--cat-fg); }
+  .sch-chip__text, .sch-more, .sch-cal__none { display: none; }
+  .sch-agenda { display: block; }
+  .sch-row { grid-template-columns: 3.4rem minmax(0, 1fr); }
+  .sch-row__actions { grid-column: 2; }
+  .sch-main .panel__head .seg { order: 3; }
+}
+
+/* Clear schedules page: the two choices */
+.sch-clear__choices { margin: 0 0 var(--space-4); padding: 0; border: 0; }
+.sch-clear__choices .checkbox { margin-top: var(--space-2); }
+.danger-zone .checkbox { margin-bottom: var(--space-3); }
+
+/* =====================================================================
+   [ANNOUNCEMENT LINK] "Also add to Schedule as an event" on the Announcements page, and the
+   "Linked to Schedule" / "From announcement" markers. Colours come from SECTION 1 only.
+   ===================================================================== */
+.badge--linked { background: #FAF5E8; color: #6B5214; border-color: var(--gold-300); text-decoration: none; }
+a.badge--linked:hover { background: var(--gold-300); color: var(--burgundy-900); }
+
+.ann-toggle { grid-column: 1 / -1; }
+.ann-toggle .checkbox { margin-top: 0; font-size: var(--step-0); }
+.ann-toggle__text { display: grid; gap: 0.1rem; }
+.ann-toggle__text strong { color: var(--burgundy-700); }
+.ann-toggle__text small { font-size: var(--step--1); color: var(--charcoal-500); }
+.ann-event { margin-top: var(--space-4); padding: var(--space-5); background: var(--page); border: 1px solid var(--line); border-left: 3px solid var(--gold-500); border-radius: var(--radius-m); }
+.ann-event[hidden] { display: none; }
+.ann-event__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.ann-event .field__error { margin-top: var(--space-3); }
+.ann-event__note { margin: var(--space-4) 0 0; font-size: var(--step--1); color: var(--charcoal-500); max-width: 60ch; }
+/* Announcements list + Schedule preview: stacked (the table needs the width), side by side only on wide screens */
+.ann-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+@media (min-width: 1500px) { .ann-layout--side { grid-template-columns: minmax(0, 1fr) 19rem; } }
+.ann-layout .table td[data-label="When"] { min-width: 9.5rem; }
+.ann-link { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.ann-when { min-width: 0; }
+@media (max-width: 700px) { .ann-when { text-align: right; } }
+.ann-event-line { display: block; margin-top: var(--space-1); font-size: var(--step--1); color: var(--charcoal-500); }
+.sch-linked { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); padding: var(--space-3) var(--space-4); background: #FAF5E8; border: 1px solid var(--gold-300); border-radius: var(--radius-s); }
+.sch-linked p { margin: 0; flex: 1 1 18rem; }
+@media (max-width: 1100px) { .ann-event__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { .ann-event { padding: var(--space-4); } .ann-event__grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* =====================================================================
+   [SCHEDULE REDESIGN] Schedule & Activities page (body class "page-schedule-index") and the
+   Add / Edit schedule form ("page-schedule-form"). Every rule is limited to those two classes, so no
+   other page changes. Colours, fonts and spacing come from SECTION 1.
+   To undo: delete from this comment to the next "=====" comment block, and restore the old templates.
+   ===================================================================== */
+
+/* Line icons used on both pages */
+.page-schedule-index svg, .page-schedule-form svg { flex: none; }
+.sch-ico, .sch-add svg, .sch-stat__icon svg, .chipsel__caret {
+  fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.sch-ico { width: 1rem; height: 1rem; margin-right: var(--space-2); }
+
+/* ---- Header: title on the left, Clear + round "+" on the right ---- */
+.sch-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--gold-500); }
+.sch-head__text { flex: 1 1 18rem; min-width: 0; }
+.sch-head h1 { margin: 0; font-size: clamp(1.7rem, 2.6vw, 2.2rem); }
+.sch-head .page-head__date { margin-bottom: var(--space-1); }
+.sch-head .page-head__lead { margin-top: var(--space-1); font-size: var(--step--1); }
+.sch-head__actions { display: flex; align-items: center; gap: var(--space-3); }
+.sch-clear-btn { display: inline-flex; align-items: center; }
+.sch-add {
+  display: inline-flex; align-items: center; justify-content: center; width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  background: var(--burgundy-700); color: #fff; text-decoration: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--gold-500), 0 2px 6px rgba(59, 10, 24, 0.25);
+  transition: background 0.15s, transform 0.15s;
+}
+.sch-add svg { width: 1.2rem; height: 1.2rem; stroke-width: 2.2; }
+.sch-add:hover { background: var(--burgundy-800); transform: scale(1.06); }
+.sch-add:active { background: var(--burgundy-900); }
+.sch-add:focus-visible, .chipsel__btn:focus-visible, .chipsel__menu li:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+
+/* ---- Four compact summary cards ---- */
+.sch-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+.sch-stat { display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--line); border-top: 2px solid var(--gold-500); border-radius: var(--radius-m); box-shadow: var(--shadow-panel); }
+.sch-stat__icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--burgundy-100); color: var(--burgundy-700); }
+.sch-stat__icon svg { width: 1.15rem; height: 1.15rem; }
+.sch-stat__body { min-width: 0; }
+.sch-stat__label { margin: 0; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--charcoal-700); }
+.sch-stat__value { margin: 0; line-height: 1.15; font-family: var(--font-display); font-size: 1.65rem; color: var(--burgundy-700); }
+.sch-stat__title { margin: 0; font-size: var(--step--1); font-weight: 600; color: var(--charcoal-900); }
+.sch-stat__note { margin: 0; font-size: 0.74rem; color: var(--charcoal-500); }
+.sch-stat__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sch-stat__note { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.3; }
+.sch-stat--empty .sch-stat__value { color: var(--charcoal-500); }
+
+/* ---- Search and filters, one slim row ---- */
+.sch-filters { margin-bottom: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); }
+.sch-filters__form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.sch-filters .field { flex: 0 1 11rem; min-width: 8rem; }
+.sch-filters .sch-filters__search { flex: 1 1 14rem; }
+.sch-filters label { margin-bottom: var(--space-1); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--charcoal-500); }
+.sch-filters input[type=search], .sch-filters select { min-height: 2.3rem; font-size: var(--step--1); }
+.sch-filters__actions { display: flex; gap: var(--space-2); }
+.sch-filters__extra { flex: 1 1 100%; margin: 0; }
+
+/* ---- Calendar / list panel ---- */
+.page-schedule-index .sch-layout { grid-template-columns: minmax(0, 1fr) 19.5rem; gap: var(--space-4); }
+.page-schedule-index .panel { padding: var(--space-4); }
+.page-schedule-index .panel__head { align-items: center; margin-bottom: var(--space-3); padding-bottom: 0; border-bottom: 0; }
+.page-schedule-index .panel__head h2 { font-size: var(--step-1); }
+.page-schedule-index .sch-cal th { padding: var(--space-1) var(--space-2); }
+.page-schedule-index .sch-cal__day { height: 5.6rem; padding: 3px var(--space-1); }
+.page-schedule-index .sch-cal__num { min-width: 1.5rem; line-height: 1.5rem; margin-bottom: 1px; }
+.page-schedule-index .sch-chip { display: block; margin-top: 2px; padding: 1px var(--space-2); line-height: 1.25; border-left-width: 3px; font-size: 0.7rem; }
+.page-schedule-index .sch-chip__text { display: block; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.page-schedule-index .sch-chip__time { display: block; font-size: 0.64rem; opacity: 0.85; }
+.page-schedule-index .sch-chip:hover { text-decoration: none; filter: brightness(0.94); }
+.page-schedule-index .sch-chip--cancelled .sch-chip__text { text-decoration: line-through; }
+
+/* Colour legend: dots, not big pills */
+.sch-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-4) 0 0; padding: var(--space-3) 0 0; list-style: none; border-top: 1px solid var(--line); }
+.sch-legend li { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.72rem; color: var(--charcoal-700); }
+.sch-legend i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cat-fg); }
+
+/* ---- Upcoming Activities panel ---- */
+.up-list { margin: 0; padding: 0; list-style: none; }
+.up-row { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); column-gap: var(--space-3); row-gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
+.up-row:first-child { border-top: 0; padding-top: var(--space-1); }
+.up-row__date { grid-row: 1 / span 2; display: grid; align-content: center; justify-items: center; height: 2.8rem; border: 1px solid var(--gold-300); border-radius: var(--radius-s); background: #FAF5E8; }
+.up-row__wd { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; color: #6B5214; line-height: 1; }
+.up-row__day { font-family: var(--font-display); font-size: 1.1rem; line-height: 1.15; color: var(--burgundy-700); }
+.up-row__title { margin: 0; font-weight: 600; font-size: var(--step--1); overflow-wrap: anywhere; }
+.up-row__title a { color: var(--burgundy-700); text-decoration: none; }
+.up-row__title a:hover { text-decoration: underline; }
+.up-row__meta { margin: 0; font-size: 0.72rem; color: var(--charcoal-500); overflow-wrap: anywhere; }
+.up-row__cat { grid-column: 2; justify-self: start; padding: 0 var(--space-2); font-size: 0.68rem; }
+.up-all { display: inline-block; margin-top: var(--space-2); font-size: var(--step--1); font-weight: 600; text-decoration: none; }
+.up-all:hover { text-decoration: underline; }
+
+/* ---- Clear schedules dialog ---- */
+.sch-dialog { width: min(30rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; padding: var(--space-5); color: var(--charcoal-900);
+  background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--error-fg); border-radius: var(--radius-m); box-shadow: 0 20px 50px rgba(59, 10, 24, 0.35); }
+.sch-dialog::backdrop { background: rgba(59, 10, 24, 0.5); }
+.sch-dialog__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+.sch-dialog__head h2 { margin: 0; font-size: var(--step-1); color: var(--error-fg); }
+.sch-dialog__x { padding: 0 var(--space-2); font-size: 1.5rem; line-height: 1; color: var(--charcoal-500); background: none; border: 0; cursor: pointer; border-radius: var(--radius-s); }
+.sch-dialog__x:hover { background: var(--burgundy-100); color: var(--burgundy-700); }
+.sch-dialog__warn { margin: 0 0 var(--space-3); font-size: var(--step--1); }
+.sch-dialog .sch-clear__choices { margin-bottom: var(--space-2); }
+.sch-dialog .field { margin-top: var(--space-3); }
+.sch-dialog .field label { font-size: var(--step--1); }
+.sch-dialog input[type=text], .sch-dialog input[type=password] { min-height: 2.4rem; }
+.sch-dialog__actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin: var(--space-4) 0 0; }
+.sch-dialog [data-clear-submit]:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---- Add / Edit form ---- */
+.sf-head { max-width: 54rem; margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--gold-500); }
+.sf-head .back-link { display: inline-block; margin-bottom: var(--space-2); font-size: var(--step--1); text-decoration: none; }
+.sf-head .back-link:hover { text-decoration: underline; }
+.sf-head h1 { margin: 0; font-size: clamp(1.7rem, 2.6vw, 2.2rem); }
+.sf-head .page-head__lead { margin-top: var(--space-1); font-size: var(--step--1); }
+.page-schedule-form .sf-panel { max-width: 54rem; padding: var(--space-5); }
+.sf-form { gap: var(--space-4); }
+.sf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.sf-grid > .field { min-width: 0; position: relative; }
+.sf-span-2 { grid-column: span 2; }
+.sf-span-full { grid-column: 1 / -1; }
+.sf-grid label, .sf-grid .field__label { margin-bottom: var(--space-1); font-size: var(--step--1); font-weight: 600; }
+.sf-grid input[type=text], .sf-grid input[type=date], .sf-grid input[type=time], .sf-grid select, .chipsel__btn { min-height: 2.5rem; font-size: var(--step--1); }
+.sf-grid label.checkbox { display: flex; margin: 0; font-weight: 500; font-size: var(--step--1); }
+.sf-grid .checkbox input { flex: none; }
+.sf-grid textarea { min-height: 5.5rem; font-size: var(--step--1); }
+
+/* Activity type: chips dropdown */
+.chipsel { position: relative; }
+.chipsel__native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.chipsel__btn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; padding: 0 var(--space-3); cursor: pointer; text-align: left;
+  background: var(--surface); border: 1px solid #CFC8C8; border-radius: var(--radius-s); font-family: inherit; color: var(--charcoal-900); }
+.chipsel__btn:hover { border-color: var(--burgundy-600); }
+.chipsel__btn[aria-expanded="true"] { border-color: var(--burgundy-700); }
+.chipsel__placeholder { color: var(--charcoal-500); }
+.chipsel__caret { width: 1rem; height: 1rem; color: var(--charcoal-500); transition: transform 0.15s; }
+.chipsel__btn[aria-expanded="true"] .chipsel__caret { transform: rotate(180deg); }
+.chipsel__menu { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); width: max(100%, 17rem); margin: 0; padding: var(--space-3);
+  list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); box-shadow: 0 12px 30px rgba(42, 40, 41, 0.18); }
+.chipsel__menu[hidden] { display: none; }
+.chipsel__menu li { cursor: pointer; border-radius: 99px; }
+.chipsel__menu li .cat { padding: 0.2rem var(--space-3); font-size: 0.78rem; box-shadow: inset 0 0 0 1px transparent; }
+.chipsel__menu li:hover .cat { box-shadow: inset 0 0 0 1px var(--cat-fg); }
+.chipsel__menu li[aria-selected="true"] .cat { box-shadow: inset 0 0 0 2px var(--cat-fg); }
+.field--error .chipsel__btn { border-color: var(--error-fg); }
+
+/* Voices and members */
+.sf-voices__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.sf-voices__tools { font-size: var(--step--1); color: var(--charcoal-500); }
+.sf-voices .sch-checks { margin-top: var(--space-2); gap: var(--space-2) var(--space-5); padding: var(--space-3) var(--space-4); background: var(--page); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.sf-voices .field__hint { margin-top: var(--space-1); }
+.sf-members { border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--surface); }
+.sf-members summary { padding: var(--space-3) var(--space-4); font-size: var(--step--1); }
+.sf-members .field__hint, .sf-members .sch-picks { margin: 0 var(--space-4) var(--space-3); }
+.sf-members .sch-picks { max-height: 13rem; }
+.sf-actions { gap: var(--space-2); margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.sf-actions .btn { min-height: 2.5rem; padding: 0 var(--space-5); }
+
+/* ---- Responsive (page-scoped; declared after the base rules so they win) ---- */
+@media (max-width: 1100px) {
+  .sch-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-schedule-index .sch-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .sch-head__actions { width: 100%; justify-content: flex-end; }
+  .sch-filters .field { flex: 1 1 8rem; }
+  .sch-filters__actions { width: 100%; }
+  .page-schedule-index .sch-cal__day { height: 3.2rem; padding: 2px; text-align: center; }
+  .page-schedule-index .sch-cal__num { margin-bottom: 0; }
+  .page-schedule-index .sch-chip { display: inline-block; width: 0.5rem; height: 0.5rem; margin: 1px; padding: 0; border: 0; border-radius: 50%; background: var(--cat-fg); }
+  .page-schedule-index .sch-chip__text, .page-schedule-index .sch-chip__time, .page-schedule-index .sch-more, .page-schedule-index .sch-cal__none { display: none; }
+  .page-schedule-index .sch-agenda { display: block; }
+  .sf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sf-span-2 { grid-column: 1 / -1; }
+  .page-schedule-form .sf-panel { padding: var(--space-4); }
+}
+@media (max-width: 480px) {
+  .sch-stats { grid-template-columns: minmax(0, 1fr); }
+  .sf-grid { grid-template-columns: minmax(0, 1fr); }
+  .sf-actions .btn { flex: 1; }
+  .sch-dialog { padding: var(--space-4); }
+}
+
+/* =====================================================================
+   [DASHBOARD REDESIGN] and [MEMBERS REDESIGN]
+   Everything below is limited to the Dashboard (body class "page-dashboard") and the Members page
+   (body class "page-members"), so no other page is affected. It only uses the colours, fonts and
+   spacing from SECTION 1. To undo the redesign, delete everything from this comment to the end of the file.
+   ===================================================================== */
+
+/* Soft ivory page background on these two pages */
+body.page-dashboard, body.page-members { background: #FBF8F2; }
+
+/* Small line icons (used inside buttons, titles and cards) */
+.ico { width: 1.25rem; height: 1.25rem; flex: none; }
+
+/* ---------- Dashboard: welcome heading ---------- */
+.page-dashboard .dash-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+.page-dashboard .dash-head__text { min-width: 0; }
+.page-dashboard .dash-head__eyebrow { margin: 0 0 var(--space-1); font-family: var(--font-display); color: var(--charcoal-700); }
+.page-dashboard .dash-head h1 { margin: 0; font-size: clamp(1.9rem, 3.2vw, 2.6rem); overflow-wrap: anywhere; }
+.page-dashboard .dash-head__lead { margin: var(--space-2) 0 0; color: var(--charcoal-500); }
+.page-dashboard .dash-head__aside { flex: none; max-width: 18rem; }
+.page-dashboard .dash-head__date { margin: 0 0 var(--space-3); font-size: var(--step--1); color: var(--charcoal-500); text-align: right; }
+.page-dashboard .dash-quote {
+  margin: 0; padding: var(--space-1) 0 var(--space-1) var(--space-4);
+  border-left: 2px solid var(--gold-500);
+  font-family: var(--font-display); font-style: italic; font-size: var(--step-1); color: var(--charcoal-700);
+}
+.page-dashboard .dash-quote p { margin: 0; line-height: 1.5; }
+
+/* Section title used above Quick Actions */
+.page-dashboard .section-title {
+  display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3);
+  font-size: var(--step-0); color: var(--burgundy-700);
+}
+.page-dashboard .section-title .ico { color: var(--gold-500); width: 1.1rem; height: 1.1rem; }
+.page-dashboard .qa { margin-bottom: var(--space-6); }
+
+/* ---------- Dashboard: Quick Actions (4 across; 2 on tablets; 1 on phones, from SECTION 7) ---------- */
+.page-dashboard .action {
+  flex-direction: row; align-items: center; gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-panel);
+}
+.page-dashboard .action__icon, .page-members .stat__icon {
+  flex: none; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%;
+  background: #F6EADB; color: var(--burgundy-700);
+}
+.page-dashboard .action__icon .ico { width: 1.4rem; height: 1.4rem; }
+.page-dashboard .action__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.page-dashboard .action__label { overflow-wrap: anywhere; }
+.page-dashboard .action__go { flex: none; color: var(--charcoal-500); transition: transform 0.15s ease, color 0.15s ease; }
+.page-dashboard .action__go .ico { width: 1.1rem; height: 1.1rem; }
+.page-dashboard a.action:hover { background: var(--surface); border-color: var(--gold-500); }
+.page-dashboard a.action:hover .action__go { color: var(--burgundy-700); transform: translateX(2px); }
+.page-dashboard .action--off .action__icon { background: #F1EFEF; color: var(--charcoal-500); }
+
+/* ---------- Dashboard: Upcoming and Recent, side by side (stack on tablets, from SECTION 7) ---------- */
+.page-dashboard .dash-cols { align-items: start; }
+@media (min-width: 1101px) {
+  .page-dashboard .dash-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }   /* side by side on desktop */
+}
+@media (max-width: 1100px) {
+  .page-dashboard .dash-cols { grid-template-columns: minmax(0, 1fr); }   /* stacked on tablets and phones */
+}
+.page-dashboard .panel__head { align-items: center; margin-bottom: var(--space-4); padding-bottom: 0; border-bottom: 0; }
+.panel__title { display: flex; align-items: center; gap: var(--space-3); margin: 0; margin-right: auto; font-size: var(--step-1); }
+.panel__title .ico { color: var(--burgundy-700); }
+.link-action--go { display: inline-flex; align-items: center; gap: var(--space-2); }
+.link-action--go .ico { width: 1rem; height: 1rem; }
+
+.page-dashboard .panel--upcoming .empty {
+  min-height: 14rem; align-content: center;
+  border: 1px solid var(--line); border-left: 3px solid var(--burgundy-700); border-radius: var(--radius-s);
+  background: #FFFDFA;
+}
+.empty__icon { display: block; margin-bottom: var(--space-3); color: var(--burgundy-700); }
+.empty__icon .ico { width: 2.4rem; height: 2.4rem; stroke-width: 1.4; }
+
+.page-dashboard .event__date { background: var(--surface); }
+.page-dashboard .log__item { grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--space-4); align-items: center; padding: var(--space-3) 0; }
+.page-dashboard .log__title { font-size: 0.92rem; }
+.page-dashboard .log__title strong { font-weight: 600; }
+.log__icon {
+  display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: var(--radius-m);
+  color: #fff; background: var(--burgundy-700);
+}
+.log__icon .ico { width: 1.15rem; height: 1.15rem; }
+.log__icon--announce { background: #7C5BA6; }
+.log__icon--music    { background: #3E9B78; }
+.log__icon--choice   { background: #3F7FBF; }
+.log__icon--member   { background: #1F7A55; }
+.log__icon--schedule { background: var(--gold-500); }
+
+/* Dashboard on tablets and phones */
+@media (max-width: 1100px) {
+  .page-dashboard .dash-quote { display: none; }
+}
+@media (max-width: 760px) {
+  .page-dashboard .dash-head { flex-direction: column; gap: var(--space-3); }
+  .page-dashboard .dash-head__date { text-align: left; margin: 0; }
+  .page-dashboard .dash-head__aside { max-width: none; }
+  .page-dashboard .panel__head { flex-wrap: wrap; }
+}
+
+/* ---------- Members: heading and the compact icon buttons ---------- */
+.page-members .page-head--split { flex-wrap: nowrap; align-items: flex-end; margin-bottom: var(--space-5); }
+.page-members .page-head__text { flex: 1; min-width: 0; }
+.page-members .page-head__date {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--burgundy-600);
+}
+.page-members .page-head h1 { font-size: clamp(2rem, 3.4vw, 2.75rem); }
+.page-members .page-head__lead { margin-top: var(--space-1); margin-bottom: 0; max-width: none; }
+.page-members .page-head__actions { flex: none; flex-wrap: nowrap; gap: var(--space-2); }
+
+.icon-btn {
+  position: relative; display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0;
+  color: var(--burgundy-700); background: var(--surface); text-decoration: none; cursor: pointer;
+  border: 1px solid var(--burgundy-700); border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.icon-btn:hover { background: var(--burgundy-100); }
+.icon-btn--primary { background: var(--burgundy-700); color: #fff; }
+.icon-btn--primary:hover { background: var(--burgundy-800); }
+@media (pointer: coarse) { .icon-btn { width: 2.75rem; height: 2.75rem; } }   /* easier to tap on touch screens */
+
+/* The tooltip. It shows on mouse-over and on keyboard focus, stays while the pointer is on it, and Esc hides it.
+   The transparent top border is a bridge so the pointer can travel from the button onto the tooltip. */
+.icon-btn__tip {
+  position: absolute; z-index: 20; top: 100%; right: 0;
+  padding: 0.35rem 0.65rem; border-top: 8px solid transparent; background-clip: padding-box;
+  font-size: 0.75rem; font-weight: 500; line-height: 1.3; white-space: nowrap;
+  color: #fff; background-color: var(--charcoal-900); border-radius: var(--radius-s);
+  opacity: 0; visibility: hidden; transition: opacity 0.12s ease, visibility 0s linear 0.12s;
+}
+.icon-btn:hover .icon-btn__tip, .icon-btn:focus-visible .icon-btn__tip {
+  opacity: 1; visibility: visible; transition-delay: 0s;
+}
+.icon-btn[data-tip-off] .icon-btn__tip { opacity: 0; visibility: hidden; }
+
+/* ---------- Members: summary cards with icon and arrow ---------- */
+.page-members .stat {
+  display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5);
+  color: inherit; text-decoration: none;
+}
+.page-members .stat::before { display: none; }
+.page-members .stat__icon .ico { width: 1.4rem; height: 1.4rem; }
+.page-members .stat__body { display: grid; min-width: 0; }
+.page-members .stat__label { display: block; font-size: 0.72rem; letter-spacing: 0.06em; }
+.page-members .stat__value { display: block; margin: var(--space-1) 0; font-size: clamp(1.75rem, 2.4vw, 2.1rem); }
+.page-members .stat__note { display: block; font-size: 0.8rem; }
+.page-members .stat__go { margin-left: auto; flex: none; color: var(--charcoal-500); }
+.page-members .stat__go .ico { width: 1.1rem; height: 1.1rem; }
+.page-members a.stat:hover { border-color: var(--gold-500); }
+.page-members a.stat:hover .stat__go { color: var(--burgundy-700); }
+
+/* ---------- Members: search and filters (desktop layout; the tablet/phone rules are earlier in this file) ---------- */
+.page-members .panel--filters { padding: var(--space-4) var(--space-5); }
+.page-members .toolbar .field label { font-size: 0.75rem; font-weight: 500; color: var(--charcoal-500); margin-bottom: var(--space-1); }
+.search-box { position: relative; }
+.search-box .ico { position: absolute; left: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--charcoal-500); width: 1.1rem; height: 1.1rem; pointer-events: none; }
+.search-box input { padding-left: 2.5rem; }
+.page-members .toolbar__actions .btn { min-height: 2.9rem; padding: 0 var(--space-5); gap: var(--space-2); }
+.page-members .toolbar__actions .ico { width: 1.1rem; height: 1.1rem; }
+@media (min-width: 1101px) {
+  .page-members .toolbar { grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(0, 1fr)) auto; }
+}
+@media (max-width: 760px) {
+  .page-members .toolbar__actions .btn { width: 100%; }
+}
+
+/* ---------- Members: roster panel and table ---------- */
+.page-members .panel--roster .panel__title .ico { width: 1.3rem; height: 1.3rem; }
+.btn--icon { gap: var(--space-2); }
+.btn--icon .ico { width: 1rem; height: 1rem; }
+.page-members .table th { font-size: 0.72rem; }
+.page-members .table td { padding-block: var(--space-4); }
+.page-members .table__name a { font-size: 0.92rem; }
+.table-wrap--roster { overflow: visible; }   /* lets the row menu open past the bottom of the table */
+
+.link-action--icon { display: inline-flex; align-items: center; gap: var(--space-2); }
+.link-action--icon .ico { width: 1rem; height: 1rem; }
+
+/* The three-dot menu at the end of each row */
+.rowmenu { position: relative; }
+.rowmenu__btn {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--radius-s);
+  color: var(--charcoal-500); cursor: pointer; list-style: none;
+}
+.rowmenu__btn::-webkit-details-marker { display: none; }
+.rowmenu__btn:hover, .rowmenu[open] > .rowmenu__btn { background: var(--burgundy-100); color: var(--burgundy-700); }
+.rowmenu__btn .ico { width: 1.15rem; height: 1.15rem; }
+.rowmenu__panel {
+  position: absolute; z-index: 15; right: 0; top: calc(100% + 4px); min-width: 9.5rem; padding: var(--space-1);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-s); box-shadow: var(--shadow-panel);
+}
+.rowmenu__panel form { display: block; margin: 0; }
+.rowmenu__item {
+  display: block; width: 100%; padding: var(--space-2) var(--space-3); text-align: left;
+  font: inherit; font-size: var(--step--1); font-weight: 600; color: var(--burgundy-700);
+  background: none; border: 0; border-radius: var(--radius-s); cursor: pointer;
+}
+.rowmenu__item:hover { background: var(--burgundy-100); }
+
+/* =====================================================================
+   ORGANIZATIONAL STRUCTURE (Members page). Markup: templates/_org_structure.html
+   Colours: burgundy bar, ivory body, antique-gold connectors (--org-line).
+   ===================================================================== */
+.org {
+  --org-line: var(--gold-500);
+  --org-card-bg: #FFFFFF;
+  --org-stem: 1.5rem;                      /* length of the little vertical connectors */
+  padding: 0; overflow: hidden; margin-bottom: var(--space-5);
+}
+.org__head { margin: 0; font: inherit; }
+.org__bar {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: var(--space-3) var(--space-5); text-align: left; cursor: pointer;
+  font: inherit; color: var(--ivory); background: var(--burgundy-700); border: 0;
+  transition: background-color 0.15s ease;
+}
+.org__bar:hover { background: var(--burgundy-800); }
+.org__bar:focus-visible { outline: 2px solid var(--gold-300); outline-offset: -4px; }
+.org__icon { width: 1.25rem; height: 1.25rem; flex: none; color: var(--gold-300); }
+.org__title {
+  font-family: var(--font-display); font-size: 0.9rem; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+}
+.org__count { margin-left: auto; font-size: 0.8rem; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--gold-300); }
+.org__chevron { width: 1.25rem; height: 1.25rem; flex: none; transition: transform 0.3s ease; }
+.org.is-collapsed .org__chevron { transform: rotate(180deg); }
+
+.org__body { padding: var(--space-5) var(--space-5) var(--space-5); background: #FCFAF6; }
+
+/* Boxes (cards) */
+.org-card {
+  display: flex; flex-direction: column; justify-content: center; min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--org-card-bg); border: 1px solid var(--gold-300); border-radius: var(--radius-m);
+  box-shadow: 0 1px 2px rgba(42, 40, 41, 0.05);
+}
+.org-card--vacant { background: transparent; border-style: dashed; box-shadow: none; }
+.org-person { display: flex; align-items: center; gap: var(--space-3); min-width: 0; color: inherit; text-decoration: none; }
+a.org-person:hover .org-person__name { text-decoration: underline; }
+a.org-person:focus-visible, a.org-mem:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; border-radius: var(--radius-s); }
+.org-card__text { display: grid; gap: 2px; min-width: 0; }
+.org-card__title { margin: 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--burgundy-700); overflow-wrap: anywhere; }
+.org-person__name { font-size: 0.85rem; line-height: 1.25; color: var(--charcoal-900); overflow-wrap: anywhere; }
+.org-vacant { font-size: 0.78rem; font-style: italic; color: var(--charcoal-500); }
+
+/* Round picture, initials, or the neutral placeholder */
+.org-avatar {
+  flex: none; display: grid; place-items: center; overflow: hidden;
+  width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  background: var(--burgundy-100); color: var(--burgundy-700); border: 1px solid var(--gold-300);
+  font-family: var(--font-display); font-size: 0.95rem; font-weight: 600;
+}
+.org-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.org-avatar--sm { width: 2.1rem; height: 2.1rem; font-size: 0.75rem; }
+.org-avatar--md { width: 2.5rem; height: 2.5rem; font-size: 0.85rem; }
+.org-avatar--empty { background: #ECE8E4; border-color: #D9D3CD; color: #B9B1A9; }
+.org-avatar--empty svg { width: 70%; height: 70%; fill: currentColor; }
+
+/* ---------- [DEFAULT AVATAR] ----------
+   The round picture for every member (see templates/_avatar.html). With a photo, the photo fills the circle.
+   Without one (or if the photo cannot load), an ivory circle with a gold ring and a burgundy silhouette is shown.
+   Colours: --ivory, --gold-500 / --gold-300 and --burgundy-700 at the top of this file. Sizes: avatar--md / --lg / --xl. */
+.avatar--sil {
+  position: relative; display: grid; place-items: end center; overflow: hidden; flex: none;
+  background: radial-gradient(circle at 50% 28%, #FFFDF8 0%, var(--ivory) 55%, #EADFC6 100%);
+  color: var(--burgundy-700); border: 1.5px solid var(--gold-500);
+}
+.avatar--sil .avatar__sil { width: 78%; height: 78%; fill: currentColor; opacity: 0.88; }
+.avatar--sil img {
+  position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover;
+  background: var(--ivory);                       /* covers the silhouette while and after the photo shows */
+}
+.avatar--sil.org-avatar { border-color: var(--gold-300); }
+.avatar--md.avatar--sil, .org-avatar--md.avatar--sil { border-width: 1.5px; }
+.avatar--xl { width: 7rem; height: 7rem; }
+
+/* Several people holding one position: the box grows and the people sit side by side */
+.org-card--multi { padding: var(--space-3); }
+.org-card--multi .org-card__title { margin-bottom: var(--space-2); }
+.org-card__count {
+  display: inline-block; min-width: 1.2rem; margin-left: var(--space-1); padding: 0 0.3rem; text-align: center;
+  font-size: 0.65rem; letter-spacing: 0; color: var(--burgundy-700); background: var(--burgundy-100); border-radius: 99px;
+}
+.org-people { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; }
+.org-people li { min-width: 0; }
+
+/* Top: Priest left, Director right, President centred under the line between them */
+.org__top { max-width: 46rem; margin-inline: auto; }
+.org-toprow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(2.5rem, 12rem) minmax(0, 1fr); align-items: center; }
+.org-card--top { align-self: center; }
+.org-link { position: relative; align-self: stretch; }
+.org-link::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1.5px solid var(--org-line); }
+.org-link::after { content: ""; position: absolute; left: 50%; top: 50%; bottom: 0; border-left: 1.5px solid var(--org-line); }
+.org-stem { display: block; height: var(--org-stem); width: 0; margin-inline: auto; border-left: 1.5px solid var(--org-line); }
+.org-president { display: flex; justify-content: center; }
+.org-president .org-card { min-width: min(100%, 14rem); }
+
+/* Levels */
+.org__rest-inner { padding-top: 0; }
+.org-label {
+  display: flex; align-items: center; gap: var(--space-4); margin: 0 0 var(--space-4);
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--burgundy-700);
+}
+.org-label::before, .org-label::after { content: ""; flex: 1; border-top: 1.5px solid var(--org-line); }
+.org-label small { font-size: 0.7rem; font-weight: 400; letter-spacing: 0.04em; text-transform: none; color: var(--charcoal-500); }
+.org-level { margin-bottom: 0; }
+.org-level--other { margin-top: var(--space-5); }
+.org-row { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
+.org-row .org-card { flex: 0 1 14.5rem; }
+.org-row .org-card--multi { flex: 1 1 18rem; max-width: 100%; }
+
+/* Members grouped by voice section */
+.org-voices { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-4); }
+.org-voice {
+  display: flex; flex-direction: column; min-width: 0; padding: var(--space-4) var(--space-3) var(--space-3);
+  background: var(--org-card-bg); border: 1px solid var(--gold-300); border-radius: var(--radius-m);
+}
+.org-voice__name { margin: 0 0 var(--space-3); text-align: center; font-family: var(--font-body); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--charcoal-900); }
+.org-voice__list {
+  display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: var(--space-3) var(--space-2);
+  margin: 0 0 var(--space-3); padding: 0 var(--space-1); list-style: none;
+  max-height: 13.5rem; overflow-y: auto;            /* a big section scrolls inside its box instead of stretching the page */
+}
+.org-voice__list li { min-width: 0; }
+.org-mem { display: grid; justify-items: center; gap: 2px; width: 4.3rem; color: inherit; text-decoration: none; text-align: center; }
+a.org-mem:hover .org-mem__name { text-decoration: underline; }
+.org-mem__name { max-width: 100%; font-size: 0.7rem; line-height: 1.2; color: var(--charcoal-700); overflow-wrap: anywhere; }
+.org-voice__empty { margin: 0 0 var(--space-3); text-align: center; font-size: var(--step--1); font-style: italic; color: var(--charcoal-500); }
+.org-voice__count { margin: auto 0 0; text-align: center; }
+.org-voice__count span { display: inline-block; padding: 0.2rem var(--space-5); font-size: 0.75rem; color: var(--charcoal-700); background: #F7F1E3; border-radius: var(--radius-s); }
+.org-note { margin: var(--space-5) 0 0; text-align: center; font-size: 0.78rem; font-style: italic; color: var(--charcoal-500); }
+
+/* Collapse / expand: the part below the President slides shut (the header and the top three stay) */
+.org__rest { display: grid; grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows 0.35s ease, opacity 0.3s ease; }
+.org__rest-inner { min-height: 0; overflow: hidden; }
+.org.is-collapsed .org__rest { grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 0.35s ease, opacity 0.25s ease, visibility 0s linear 0.35s; }
+.org.no-anim .org__rest, .org.no-anim .org__chevron { transition: none; }
+@media (prefers-reduced-motion: reduce) { .org__rest, .org__chevron { transition: none !important; } }
+
+/* Small screens: the top row stacks, bars and cards shrink */
+@media (max-width: 640px) {
+  .org__bar { padding: var(--space-3) var(--space-4); }
+  .org__count { display: none; }
+  .org__chevron { margin-left: auto; }
+  .org__body { padding: var(--space-4); }
+  .org-toprow { grid-template-columns: minmax(0, 1fr); }
+  .org-link { height: var(--org-stem); }
+  .org-link::before { display: none; }
+  .org-link::after { top: 0; }
+  .org-row .org-card { flex: 1 1 100%; }
+}
+
+/* =====================================================================
+   [ADD PERSON FORM] Add person / Edit member / Edit leader (member_form.html) and the leaders list
+   Burgundy, ivory and antique gold. Everything is scoped to .page-member-form so no other page changes.
+   ===================================================================== */
+.page-member-form .page-head--split { align-items: flex-start; }
+.page-member-form .page-head h1 { font-size: clamp(2rem, 3.2vw, 2.6rem); }
+
+/* Note box beside the heading */
+.mf-note {
+  display: flex; gap: var(--space-3); align-items: flex-start; max-width: 24rem;
+  padding: var(--space-3) var(--space-4); background: var(--ivory);
+  border: 1px solid var(--gold-300); border-left: 3px solid var(--gold-500); border-radius: var(--radius-m);
+  color: var(--charcoal-700); font-size: var(--step--1);
+}
+.mf-note svg { flex: none; width: 1.4rem; height: 1.4rem; color: var(--burgundy-700); margin-top: 0.1rem; }
+.mf-note strong { display: block; color: var(--burgundy-700); font-family: var(--font-display); font-weight: 700; margin-bottom: 0.15rem; }
+.mf-note p { margin: 0; }
+
+/* Each numbered section */
+.page-member-form .mf-card { padding: 0; margin-bottom: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-m);
+  background: var(--surface); box-shadow: 0 1px 2px rgba(42, 40, 41, 0.04); }
+.mf-card[hidden] { display: none; }
+.mf-card__head { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line); }
+.mf-card__head h2 { margin: 0; font-size: var(--step-1); color: var(--burgundy-700); }
+.mf-card__head p { margin: 0.15rem 0 0; font-size: var(--step--1); color: var(--charcoal-500); }
+.mf-card__tag { margin-left: auto; align-self: center; padding: 0.15rem var(--space-3); font-size: 0.75rem; white-space: nowrap;
+  color: var(--charcoal-700); background: var(--ivory); border: 1px solid var(--gold-300); border-radius: 99px; }
+.mf-card__body { padding: var(--space-5); }
+.mf-step { flex: none; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; margin-top: 0.1rem;
+  font-size: 0.85rem; font-weight: 700; color: #fff; background: var(--gold-500); border-radius: 50%; }
+
+/* Form controls */
+.page-member-form .field label, .page-member-form .field__label { font-family: var(--font-body); font-size: var(--step--1);
+  font-weight: 600; color: var(--charcoal-900); }
+.page-member-form .field input[type="text"], .page-member-form .field input[type="date"],
+.page-member-form .field select, .page-member-form .field textarea {
+  width: 100%; min-height: 2.75rem; padding: 0 var(--space-3); font: inherit; color: var(--charcoal-900);
+  background: #fff; border: 1px solid #D9D2D3; border-radius: var(--radius-s);
+}
+.page-member-form .field textarea { padding: var(--space-3); min-height: 6rem; }
+.page-member-form .field input:focus, .page-member-form .field select:focus, .page-member-form .field textarea:focus {
+  outline: 2px solid var(--gold-500); outline-offset: 1px; border-color: var(--gold-500);
+}
+.page-member-form .field--error input, .page-member-form .field--error select { border-color: var(--error-fg); background: var(--error-bg); }
+.page-member-form .readonly { display: flex; align-items: center; gap: var(--space-2); min-height: 2.75rem; padding: 0 var(--space-3);
+  background: var(--page); border: 1px solid var(--line); border-radius: var(--radius-s); color: var(--charcoal-500); }
+
+/* Record type cards */
+.mf-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.mf-type { position: relative; display: flex; gap: var(--space-4); align-items: center; padding: var(--space-4) var(--space-5);
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius-m); cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.mf-type:hover { border-color: var(--gold-500); }
+.mf-type input { position: absolute; top: var(--space-3); left: var(--space-3); accent-color: var(--burgundy-700); width: 1.05rem; height: 1.05rem; }
+.mf-type.is-selected { border-color: var(--burgundy-700); background: #FBF6F7; box-shadow: inset 0 0 0 1px var(--burgundy-700); }
+.mf-type input:focus-visible ~ .mf-type__icon { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+.mf-type__icon { flex: none; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin-left: var(--space-3);
+  color: var(--burgundy-700); background: var(--burgundy-100); border-radius: 50%; }
+.mf-type--leader .mf-type__icon { color: #8A6D2F; background: #F4EBD7; }
+.mf-type__icon svg { width: 1.8rem; height: 1.8rem; }
+.mf-type__text strong { display: block; font-family: var(--font-display); color: var(--burgundy-700); }
+.mf-type__text small { display: block; margin-top: 0.2rem; font-size: 0.8rem; line-height: 1.4; color: var(--charcoal-500); }
+
+/* Photo upload area with preview */
+.mf-photo { display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: var(--space-4); align-items: stretch; }
+.mf-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-5);
+  text-align: center; background: var(--ivory); border: 1.5px dashed var(--gold-500); border-radius: var(--radius-m); }
+.mf-drop svg { width: 2rem; height: 2rem; color: var(--gold-500); }
+.mf-drop strong { color: var(--burgundy-700); }
+.mf-drop input[type="file"] { max-width: 100%; font-size: var(--step--1); }
+.mf-drop .field__hint, .mf-drop .checkbox { margin: 0; }
+.mf-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-3); border-left: 1px solid var(--line); font-size: 0.8rem; color: var(--charcoal-500); text-align: center; }
+.photo-preview { display: grid; place-items: center; width: 5.5rem; height: 5.5rem; overflow: hidden; border-radius: 50%;
+  background: var(--burgundy-100); color: var(--burgundy-600); font-weight: 700; font-size: 1.4rem; }
+.photo-preview svg { width: 70%; height: 70%; }
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.mf-hint { margin: var(--space-2) 0 0; font-size: 0.8rem; color: var(--charcoal-500); }
+.mf-hint[hidden] { display: none; }
+.page-member-form .form-actions { padding-top: var(--space-2); }
+
+@media (max-width: 720px) {
+  .mf-types, .mf-photo { grid-template-columns: minmax(0, 1fr); }
+  .mf-preview { border-left: 0; border-top: 1px solid var(--line); flex-direction: row; justify-content: center; padding-top: var(--space-4); }
+  .mf-note { max-width: none; }
+  .page-member-form .page-head--split { flex-direction: column; }
+}
+
+/* Leaders list */
+.leader-name { display: flex; align-items: center; gap: var(--space-3); }
+.leader-name .avatar { flex: none; }
+.badge--leader { background: #F4EBD7; color: #6B5214; border-color: var(--gold-300); }
+.page-leaders .mf-note { max-width: none; margin-bottom: var(--space-5); }
+
+
+/* =====================================================================
+   [CONFIRM DIALOG] The "Are you sure?" box for delete actions (_confirm_dialog.html + app.js)
+   Burgundy and gold like the rest of the site; the red is only used for the danger icon, the top edge and the
+   confirm button. Opened with the trash icon, closed with Cancel, Esc or a click on the dark area.
+   ===================================================================== */
+/* The trash icon: a quiet burgundy icon in a light square, turning red only when you point at it (as in the design) */
+.icon-btn--danger { color: var(--burgundy-700); border-color: var(--line); border-radius: var(--radius-m); }
+.icon-btn--danger:hover, .icon-btn--danger:focus-visible { color: var(--error-fg); background: var(--error-bg); border-color: var(--error-line); }
+.icon-btn--danger svg { width: 1.15rem; height: 1.15rem; }
+.icon-btn:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+
+.cdialog {
+  width: min(26rem, calc(100% - 2rem)); padding: 0; color: var(--charcoal-900); background: var(--surface);
+  border: 1px solid var(--line); border-top: 3px solid var(--error-fg); border-radius: var(--radius-m);
+  box-shadow: 0 24px 60px rgba(42, 10, 20, 0.32);
+}
+.cdialog::backdrop { background: rgba(59, 10, 24, 0.5); }
+.cdialog[open] { animation: cdialog-in 0.18s ease-out; }
+@keyframes cdialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.cdialog__form { display: grid; justify-items: start; gap: var(--space-3); margin: 0; padding: var(--space-5); }
+.cdialog__icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; color: var(--error-fg); background: var(--error-bg); border-radius: 50%; }
+.cdialog__icon svg { width: 1.4rem; height: 1.4rem; }
+.cdialog__title { margin: 0; font-size: var(--step-1); color: var(--burgundy-700); overflow-wrap: anywhere; }
+.cdialog__text { margin: 0; font-size: var(--step--1); line-height: 1.55; color: var(--charcoal-700); }
+.cdialog__actions { justify-self: stretch; display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+body:has(dialog[open]) { overflow: hidden; }          /* the page behind the dialog does not scroll */
+@media (prefers-reduced-motion: reduce) { .cdialog[open] { animation: none; } }
+
+
+/* =====================================================================
+   [MEMBER DETAIL REDESIGN] member_detail.html: header, two balanced columns, compact cards
+   Scoped to .page-member-detail, so no other page changes.
+   ===================================================================== */
+.mdi { flex: none; width: 1.15rem; height: 1.15rem; }
+
+.page-member-detail .md-head { margin-bottom: var(--space-5); }
+.md-head__row { gap: var(--space-4); }
+.md-head__avatar { width: 5rem; height: 5rem; font-size: 1.5rem; box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--line); }
+.md-head__id { flex: 1 1 14rem; min-width: 0; }
+.md-head__id h1 { font-size: clamp(1.75rem, 3.4vw, 2.4rem); line-height: 1.15; overflow-wrap: anywhere; }
+.md-head__actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.md-head__actions .icon-btn { width: 2.6rem; height: 2.6rem; }
+
+/* Two columns that stay balanced: the cards are split between the columns in the template */
+.md-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.md-col { gap: var(--space-4); min-width: 0; }
+.page-member-detail .md-card { margin: 0; padding: var(--space-4) var(--space-5); }
+.page-member-detail .md-card > p.muted { margin: 0 0 var(--space-3); font-size: var(--step--1); }
+.page-member-detail .md-card > p.login-note { margin: var(--space-3) 0 0; font-size: 0.8rem; }
+.page-member-detail .md-card .empty { padding: var(--space-4) var(--space-3); }
+
+/* Card heading: icon, title, and (on the right) a small note or the pencil. Every heading lines up the same way. */
+.md-card__head { align-items: center; margin-bottom: var(--space-3); padding-bottom: var(--space-2); }
+.md-card__head h2 { display: flex; align-items: center; gap: var(--space-2); min-width: 0; font-size: 1.05rem; }
+.md-card__head h2 .mdi { color: var(--burgundy-600); }
+.md-head-tools { display: inline-flex; align-items: center; gap: var(--space-2); }
+.md-edit { display: inline-grid; place-items: center; width: 2rem; height: 2rem; color: var(--burgundy-700); text-decoration: none; border-radius: var(--radius-s); }
+.md-edit:hover { background: var(--burgundy-100); }
+.md-edit:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 1px; }
+.md-edit .mdi { width: 1rem; height: 1rem; }
+
+/* Label above value. As many columns as fit, so a narrow card shows one. */
+.page-member-detail .details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-5); }
+.page-member-detail .details--single { grid-template-columns: minmax(0, 1fr); }
+.page-member-detail .details dt { font-size: 0.8rem; }
+.page-member-detail .details dd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; margin-top: 0.2rem; }
+.page-member-detail .details dd .mdi { width: 1rem; height: 1rem; color: var(--charcoal-500); }
+.page-member-detail .details dd a, .page-member-detail .details dd span { min-width: 0; overflow-wrap: anywhere; }
+.details__strong { font-weight: 600; color: var(--charcoal-900); }
+.md-sub { margin: var(--space-3) 0 var(--space-1); font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; color: var(--charcoal-500); }
+
+/* Member login: masked password with a "Permanent" label */
+.md-mask { letter-spacing: 0.18em; color: var(--charcoal-700); }
+.page-member-detail .details dd .md-pill, .md-pill {
+  margin-left: auto; padding: 0.1rem var(--space-3); font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  color: var(--success-fg); background: var(--success-bg); border: 1px solid var(--success-line); border-radius: 99px;
+}
+.md-pill--temp { color: #6B5214; background: #F4EBD7; border-color: var(--gold-300); }
+
+@media (max-width: 900px) { .md-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .page-member-detail .details { grid-template-columns: minmax(0, 1fr); }
+  .page-member-detail .md-card { padding: var(--space-4); }
+}
+
+
+/* =====================================================================
+   [ADD PERSON REDESIGN] member_form.html (Add person / Edit member / Edit leader)
+   Tighter cards, aligned grids and a clearer Record type selector. Scoped to .page-member-form.
+   ===================================================================== */
+.mf-titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.mf-titlerow h1 { margin: 0; }
+.page-member-form .page-head { margin-bottom: var(--space-5); }
+.page-member-form .mf { max-width: 66rem; }
+.page-member-form .mf-card { margin-bottom: var(--space-4); }
+.page-member-form .mf-card__head { align-items: center; padding: var(--space-3) var(--space-5); }
+.page-member-form .mf-card__head h2 { font-size: 1.1rem; }
+.page-member-form .mf-card__body { padding: var(--space-4) var(--space-5) var(--space-5); }
+.page-member-form .mf-step { width: 1.55rem; height: 1.55rem; margin-top: 0; font-size: 0.8rem; }
+
+/* Grids: one column on phones, then first and middle name side by side (last name below) and choir details in 2 columns */
+.mf-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.mf-grid .field { min-width: 0; margin: 0; }
+.mf-grid .field--full { grid-column: 1 / -1; }
+@media (min-width: 721px) {
+  .mf-grid--names { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mf-grid--choir { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Compact controls */
+.page-member-form .field input[type="text"], .page-member-form .field input[type="date"],
+.page-member-form .field select { min-height: 2.5rem; }
+.page-member-form .field textarea { min-height: 5rem; }
+.page-member-form .readonly { min-height: 2.5rem; }
+.page-member-form .field .field__hint { margin: var(--space-1) 0 0; font-size: 0.8rem; }
+.page-member-form .form-actions { justify-content: flex-end; gap: var(--space-3); }
+
+/* Photo: smaller drop area and preview */
+.page-member-form .mf-photo { grid-template-columns: minmax(0, 1fr) 9.5rem; gap: var(--space-3); }
+/* The dashed box is one big clickable label. The real file input is hidden but still reachable with the keyboard. */
+.page-member-form .mf-drop { position: relative; display: block; padding: 0; }
+.mf-drop__pick { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-4); text-align: center; cursor: pointer; }
+.mf-drop__pick svg { width: 2rem; height: 2rem; color: var(--gold-500); }
+.mf-drop__pick strong { overflow-wrap: anywhere; }
+.mf-drop__hint { font-size: 0.8rem; color: var(--charcoal-500); }
+.mf-drop__input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+.mf-drop:hover, .mf-drop:focus-within { border-color: var(--burgundy-700); }
+.mf-drop:focus-within { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+.page-member-form .mf-drop .checkbox { justify-content: center; margin: 0 var(--space-4) var(--space-3); }
+.page-member-form .mf-preview { border-left: 0; }
+.page-member-form .photo-preview { width: 4.5rem; height: 4.5rem; font-size: 1.2rem; }
+
+/* Record type selector: two cards. The real radio button covers the whole card (so clicking anywhere works and
+   keyboard and screen readers still get a normal radio group); the round tick in the corner shows the choice. */
+.page-member-form .mf-types { gap: var(--space-3); }
+.page-member-form .mf-type { align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-4) var(--space-3); }
+.page-member-form .mf-type input { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.page-member-form .mf-type__icon { width: 3rem; height: 3rem; margin-left: var(--space-5); }
+.page-member-form .mf-type__icon svg { width: 1.6rem; height: 1.6rem; }
+.page-member-form .mf-type__text { min-width: 0; }
+.mf-type__check {                 /* the round radio mark in the top-left corner, as in the design */
+  position: absolute; top: var(--space-3); left: var(--space-3); width: 1.1rem; height: 1.1rem;
+  background: #fff; border: 1.5px solid #B9AEB0; border-radius: 50%; transition: border-color 0.15s ease;
+}
+.mf-type__check::after { content: ""; position: absolute; inset: 0.18rem; border-radius: 50%; background: var(--burgundy-700); opacity: 0; transition: opacity 0.12s ease; }
+.mf-type input:checked ~ .mf-type__check { border-color: var(--burgundy-700); }
+.mf-type input:checked ~ .mf-type__check::after { opacity: 1; }
+.page-member-form .mf-type input:focus-visible ~ .mf-type__icon { outline: none; }
+.mf-type input:focus-visible ~ .mf-type__check { outline: 2px solid var(--gold-500); outline-offset: 3px; }
+.mf-type:has(input:checked) { border-color: var(--burgundy-700); background: #FBF6F7; box-shadow: inset 0 0 0 1px var(--burgundy-700); }
+
+@media (max-width: 720px) {
+  .page-member-form .mf-card__head, .page-member-form .mf-card__body { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .page-member-form .mf-photo { grid-template-columns: minmax(0, 1fr); }
+}
+
+
+/* =====================================================================
+   [MATCH THE DESIGN] Details that bring the two pages closer to the supplied mockup
+   ===================================================================== */
+/* The page content sits inside one soft ivory panel */
+.page-member-detail .content, .page-member-form .content {
+  width: calc(100% - 2 * var(--space-5)); margin: var(--space-5) auto; padding: var(--space-6);
+  background: #FCFAF6; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-panel);
+}
+@media (max-width: 640px) {
+  .page-member-detail .content, .page-member-form .content { width: calc(100% - 2 * var(--space-3)); margin: var(--space-3) auto; padding: var(--space-4); }
+}
+/* Detail header: position pill, a dot, then the Member ID */
+.md-dot { color: var(--charcoal-500); }
+/* Soft rose button (Deactivate) */
+.btn--soft { color: var(--burgundy-700); background: var(--burgundy-100); border-color: #E6CDD3; }
+.btn--soft:hover { background: #EBD5DA; border-color: var(--burgundy-600); }
+/* Member login: the (i) next to "Permanent" and the key on the reset button */
+.md-info { display: inline-grid; place-items: center; color: var(--charcoal-500); cursor: help; border-radius: 50%; }
+.page-member-detail .details dd .md-info .mdi { color: inherit; }
+.md-info:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+.md-reset { display: inline-flex; align-items: center; gap: var(--space-2); }
+.md-reset .mdi { width: 1rem; height: 1rem; }
+/* The big calendar icon above "Nothing recorded yet" */
+.md-card .empty__icon { display: block; margin-bottom: var(--space-3); color: var(--burgundy-700); }
+.md-card .empty__icon .mdi { width: 2.4rem; height: 2.4rem; stroke-width: 1.4; }
+.md-grid--extra { margin-top: var(--space-4); }
+
+/* ---- Announcements: compact permanent-delete button and its confirmation (uses .sch-dialog above) ---- */
+.icon-btn { display: inline-grid; place-items: center; flex: none; width: 2rem; height: 2rem; padding: 0; color: var(--charcoal-500);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-s); cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+.icon-btn svg { width: 1rem; height: 1rem; }
+.icon-btn:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+.icon-btn--danger { color: var(--error-fg); border-color: var(--error-line); }
+.icon-btn--danger:hover { background: var(--error-bg); border-color: var(--error-fg); }
+.ann-dialog__event { margin: 0 0 var(--space-3); padding: var(--space-3) var(--space-4); font-size: var(--step--1);
+  background: #FAF5E8; border: 1px solid var(--gold-300); border-left: 3px solid var(--gold-500); border-radius: var(--radius-s); }
+.ann-dialog__event[hidden] { display: none; }
+.ann-dialog__event p { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.ann-dialog__event .checkbox { margin: 0; }
+.ann-dialog__event .ann-dialog__hint { margin: var(--space-2) 0 0; color: var(--charcoal-500); }
+.ann-dialog .sch-dialog__warn strong { overflow-wrap: anywhere; }
+
+/* =====================================================================
+   [ROSTER TABS + LEADERS] Roster page (members.html): Choir Members | Organizational Leaders
+   Burgundy, ivory and antique gold, same tokens as the rest of the site. Scoped to .page-members / .rtabs.
+   ===================================================================== */
+.rtabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-5); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
+.panel .rtabs { margin-bottom: var(--space-4); }   /* tabs now sit inside the roster panel */
+.rtabs__tab {
+  display: inline-flex; align-items: center; gap: var(--space-2); min-height: 2.6rem; padding: 0 var(--space-5);
+  font-size: var(--step--1); font-weight: 500; color: var(--charcoal-700); text-decoration: none;
+  background: var(--ivory); border: 1px solid var(--line); border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.rtabs__tab .ico { flex: none; width: 1.1rem; height: 1.1rem; color: var(--gold-500); }
+.rtabs__tab:hover { border-color: var(--gold-500); color: var(--burgundy-700); }
+.rtabs__tab.is-active { font-weight: 600; color: #fff; background: var(--burgundy-700); border-color: var(--burgundy-700); box-shadow: var(--shadow-panel); }
+.rtabs__tab.is-active .ico { color: var(--gold-300); }
+.rtabs__count {
+  min-width: 1.4rem; padding: 0 0.4rem; font-size: 0.72rem; font-weight: 600; line-height: 1.4rem; text-align: center;
+  color: var(--burgundy-700); background: #F4EBD7; border-radius: 999px;
+}
+.rtabs__tab.is-active .rtabs__count { color: var(--burgundy-900); background: var(--gold-300); }
+
+/* Note above the leaders table */
+.lead-protect {
+  display: flex; align-items: flex-start; gap: var(--space-3); margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4);
+  font-size: 0.8rem; line-height: 1.45; color: var(--charcoal-700);
+  background: #FAF5E8; border: 1px solid var(--gold-300); border-left: 3px solid var(--gold-500); border-radius: var(--radius-s);
+}
+.lead-protect .ico { flex: none; width: 1.1rem; height: 1.1rem; margin-top: 0.1rem; color: var(--burgundy-700); }
+.panel--removed { margin-top: var(--space-5); }
+.panel--removed > .muted { margin: 0 0 var(--space-4); font-size: var(--step--1); }
+.table--leaders th:last-child { width: 4rem; }
+.table--leaders .table__actions { gap: var(--space-2); }
+
+/* Three-dot menu of the leaders table: View details, Edit, Delete permanently */
+.rowmenu__panel--wide { min-width: 12.5rem; }
+.panel--leaders .rowmenu__item , .panel--removed .rowmenu__item { display: flex; align-items: center; gap: var(--space-2); box-sizing: border-box; width: 100%; font-weight: 500; color: var(--charcoal-900); text-decoration: none; }
+.panel--leaders .rowmenu__item .ico , .panel--removed .rowmenu__item .ico { flex: none; width: 1rem; height: 1rem; color: var(--charcoal-500); }
+.panel--leaders .rowmenu__item:hover , .panel--removed .rowmenu__item:hover { background: var(--burgundy-100); color: var(--burgundy-700); }
+.panel--leaders .rowmenu__item:hover .ico , .panel--removed .rowmenu__item:hover .ico { color: var(--burgundy-700); }
+.panel--leaders .rowmenu__item--danger, .panel--removed .rowmenu__item--danger, .panel--leaders .rowmenu__item--danger .ico , .panel--removed .rowmenu__item--danger .ico { color: var(--error-fg); }
+.panel--leaders .rowmenu__item--danger:hover , .panel--removed .rowmenu__item--danger:hover { background: var(--error-bg); color: var(--error-fg); }
+.panel--leaders .rowmenu__item--danger:hover .ico , .panel--removed .rowmenu__item--danger:hover .ico { color: var(--error-fg); }
+.rowmenu__sep { display: block; height: 1px; margin: var(--space-1) var(--space-2); background: var(--line); }
+.rowmenu__item:focus-visible { outline: 2px solid var(--gold-500); outline-offset: -2px; }
+
+
+@media (max-width: 560px) {
+  .rtabs { gap: var(--space-2); }
+  .rtabs__tab { flex: 1 1 100%; justify-content: center; }
+  .page-members .page-head__actions { flex: 1 1 100%; }
+  .page-members .page-head__actions .btn { width: 100%; justify-content: center; }
+}
+
+
+/* =====================================================================
+   [PHOTO UPLOAD] Profile photo area of member_form.html (Add person / Edit member / Edit leader)
+   One wide dashed box with the icon, "Click to upload photo" and the small format note centred inside it,
+   and the preview on the right, vertically centred beside it. Scoped to .page-member-form.
+   (The old box looked off-centre because the general ".field label" rule overrode the box's own layout.)
+   ===================================================================== */
+.page-member-form .mf-photo { grid-template-columns: minmax(0, 1fr) 8.5rem; gap: var(--space-4); align-items: center; }
+.page-member-form .mf-drop { display: flex; flex-direction: column; justify-content: center; align-items: stretch; min-height: 7.5rem; padding: 0; }
+.page-member-form .mf-drop .mf-drop__pick {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1 1 auto; gap: 0.2rem;
+  margin: 0; padding: var(--space-4); font-weight: inherit; text-align: center; cursor: pointer;
+}
+.page-member-form .mf-drop__pick svg { width: 2.1rem; height: 2.1rem; margin-bottom: 0.15rem; color: var(--gold-500); }
+.page-member-form .mf-drop__pick strong { font-size: 0.95rem; font-weight: 600; color: var(--burgundy-700); }
+.page-member-form .mf-drop__hint { font-size: 0.72rem; line-height: 1.4; color: var(--charcoal-500); }
+.page-member-form .mf-preview { align-self: center; gap: var(--space-1); padding: 0; }
+.page-member-form .mf-drop .checkbox { margin: 0 var(--space-4) var(--space-3); }
+
+@media (max-width: 720px) {
+  .page-member-form .mf-photo { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+  .page-member-form .mf-preview { flex-direction: row; justify-content: center; gap: var(--space-3); padding: 0; border-top: 0; }
+}
+
+/* [TABS] The roster tabs switch panes in place (members.html, data-roster / data-pane). The server sets the first tab. */
+.roster-page[data-tab="members"] [data-pane="leaders"],
+.roster-page[data-tab="leaders"] [data-pane="members"] { display: none; }
+.table--leaders .table__none td { padding-block: var(--space-6); text-align: center; }

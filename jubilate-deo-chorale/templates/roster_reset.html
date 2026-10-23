@@ -1,0 +1,59 @@
+{#
+  =====================================================================
+  roster_reset.html - CONFIRMATION PAGE FOR RESETTING THE ROSTER
+  =====================================================================
+  Nothing is erased on this page until the form is submitted with the exact
+  phrase AND the administrator's password. The server checks both again.
+  Route: roster_reset in app.py (search [RESET ROSTER]).
+#}
+{% extends "base.html" %}
+
+{% block title %}Reset roster{% endblock %}
+{% block body_class %}page-members page-roster-reset{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list') }}">&larr; Members</a></p>
+    <h1>Reset roster</h1>
+    <p class="page-head__lead">Start over with an empty roster and Member IDs beginning again at JDC-0001. Use this after pilot testing.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide danger-zone">
+    <header class="panel__head"><h2>This will permanently erase</h2></header>
+    <ul>
+      <li><strong>{{ counts.total }}</strong> member{{ '' if counts.total == 1 else 's' }} ({{ counts.active }} on the roster, {{ counts.archived }} in the archive)</li>
+      <li><strong>{{ counts.logins }}</strong> member login{{ '' if counts.logins == 1 else 's' }}</li>
+      <li><strong>{{ counts.photos }}</strong> profile photo{{ '' if counts.photos == 1 else 's' }}</li>
+      <li><strong>{{ counts.tasks }}</strong> assigned task{{ '' if counts.tasks == 1 else 's' }} and <strong>{{ counts.attendance }}</strong> attendance record{{ '' if counts.attendance == 1 else 's' }}</li>
+      <li><strong>{{ counts.history }}</strong> history entr{{ 'y' if counts.history == 1 else 'ies' }} about members</li>
+    </ul>
+    <p><strong>It cannot be undone from the app.</strong> Administrator and viewer accounts, voice sections, choir positions, announcements and the attendance sessions themselves are not touched. A backup copy of the database is saved automatically first, in <code>instance/backups</code>.</p>
+    <p class="muted">Tip: close this page and use <em>Export CSV</em> on the Members page first if you want a spreadsheet copy of the roster.</p>
+
+    <form method="post" action="{{ url_for('roster_reset') }}" novalidate
+          data-confirm="Last check: reset the whole roster? {{ counts.total }} member(s) will be erased and the next Member ID will be JDC-0001.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="field">
+        <label for="confirm_phrase">Type <strong class="mono">{{ phrase }}</strong> to confirm</label>
+        <input id="confirm_phrase" name="confirm_phrase" type="text" required autocomplete="off"
+               autocapitalize="characters" spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label for="password">Your password</label>
+        <div class="field__group">
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button type="button" class="field__toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      <p class="danger-zone__action">
+        <a class="btn btn--outline" href="{{ url_for('members_list') }}">Cancel</a>
+        <button class="btn btn--danger" type="submit">Reset roster</button>
+      </p>
+    </form>
+  </section>
+{% endblock %}

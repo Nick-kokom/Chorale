@@ -1,0 +1,155 @@
+{#
+  music_edit.html - EDIT ONE MUSIC FILE (details, and optionally replace the file)
+  Route: music_edit in app.py. Only people with the "Edit music files" right (administrators, or members
+  allowed in the Action Center) can open it. Archiving is on the library page (the ... menu of each file).
+#}
+{% extends layout %}
+{% block title %}Edit music file{% endblock %}
+{% block body_class %}page-music{% endblock %}
+{% block nav_music %}is-active{% endblock %}
+{% block head_extra %}{% include '_music_styles.html' %}
+{# [ML REPLACE FILE]: same rules as music.css, repeated here so this page looks right even if an old cached music.css is served. #}
+<style>
+/* ---------- [ML REPLACE FILE] Edit file page: replacement upload area ---------- */
+.ml-replace { margin-top: var(--space-2); }
+.ml-drop--replace {
+  gap: var(--space-4); min-height: 6.5rem; padding: var(--space-5) var(--space-5);
+  background: #FDFCFA; border: 1.5px dashed #D9D1C0; border-radius: var(--radius-m);
+}
+.ml-drop--replace:hover, .ml-drop--replace.is-over { background: #FAF6EE; border-color: var(--gold-500); }
+.ml-drop--replace .ml-drop__icon {
+  width: 3rem; height: 3rem; border-radius: 0; background: none; color: var(--burgundy-700);
+  padding-right: var(--space-4); border-right: 1px solid var(--line); box-sizing: content-box;
+}
+.ml-drop--replace .ml-drop__icon .ml-i { width: 1.75rem; height: 1.75rem; }
+.ml-drop--replace .ml-drop__text { flex: 1; }
+.ml-drop--replace .ml-drop__text strong { font-size: 0.92rem; font-weight: 600; }
+.ml-drop--replace .ml-drop__browse {
+  flex: none; display: inline-flex; align-items: center; gap: var(--space-2); pointer-events: none; background: #fff;
+}
+.ml-drop--replace .ml-drop__browse .ml-i { width: 1rem; height: 1rem; }
+.ml-drop--replace.has-file { border-style: solid; border-color: var(--gold-500); background: #FAF6EE; }
+.ml-drop--replace.has-file .ml-drop__text strong { color: var(--charcoal-900); }
+.ml-drop__clear {
+  position: relative; z-index: 2; flex: none; padding: 0.35rem var(--space-3); font: inherit; font-size: var(--step--1);
+  font-weight: 600; color: var(--error-fg); background: none; border: 0; border-radius: var(--radius-s); cursor: pointer;
+}
+.ml-drop__clear:hover { background: var(--error-bg); }
+.ml-drop__clear[hidden] { display: none; }
+.ml-note { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--step--1); color: var(--charcoal-700); }
+.ml-note .ml-i { width: 1rem; height: 1rem; margin-top: 0.1rem; color: var(--gold-500); }
+.ml-note small { display: block; margin-top: 2px; font-size: 0.78rem; color: var(--charcoal-500); }
+.ml-form .form-actions {
+  display: flex; justify-content: flex-end; gap: var(--space-3);
+  margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--line);
+}
+@media (max-width: 640px) {
+  .ml-drop--replace { flex-wrap: wrap; }
+  .ml-drop--replace .ml-drop__icon { padding-right: 0; border-right: 0; }
+  .ml-drop--replace .ml-drop__browse { flex: 1 1 100%; justify-content: center; }
+  .ml-form .form-actions .btn { flex: 1 1 0; justify-content: center; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('music_library') }}">&larr; Music Library</a></p>
+    <h1>Edit file</h1>
+    <p class="page-head__lead">Current file: {{ file.original_name }} ({{ file.size_label }}){% if file.archived %} &middot; <strong>archived</strong>{% endif %}</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel ml-form">
+    {% if errors %}<div class="flash flash--error" role="alert"><span>Please check the form and try again.</span></div>{% endif %}
+    <form method="post" action="{{ url_for('music_edit', file_id=file.id) }}" enctype="multipart/form-data" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field{% if errors.get('title') %} field--error{% endif %}">
+        <label for="title">Title <span class="req">*</span></label>
+        <input id="title" name="title" type="text" maxlength="120" required value="{{ values.title }}">
+        {% if errors.get('title') %}<p class="field__error">{{ errors.title }}</p>{% endif %}
+      </div>
+      <div class="form-grid">
+        <div class="field{% if errors.get('category') %} field--error{% endif %}">
+          <label for="category">Category <span class="req">*</span></label>
+          <select id="category" name="category" required data-required-message="Choose a category.">
+            <option value="">Select category</option>
+            {% for code, label in categories.items() %}<option value="{{ code }}" {% if values.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          {% if errors.get('category') %}<p class="field__error">{{ errors.category }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.get('voice') %} field--error{% endif %}">
+          <label for="voice">Voice section</label>
+          <select id="voice" name="voice">
+            <option value="general" {% if values.voice in ('', 'general') %}selected{% endif %}>General (everyone)</option>
+            {% for v in voices %}<option value="{{ v.id }}" {% if values.voice == v.id|string %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+            {% if file.voice_id and file.voice_id|string not in voices|map(attribute='id')|map('string')|list %}
+              <option value="{{ file.voice_id }}" {% if values.voice == file.voice_id|string %}selected{% endif %}>{{ file.voice_label }} (retired)</option>
+            {% endif %}
+          </select>
+          {% if errors.get('voice') %}<p class="field__error">{{ errors.voice }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="field{% if errors.get('composer') %} field--error{% endif %}">
+        <label for="composer">Composer / Arranger <span class="optional">(optional)</span></label>
+        <input id="composer" name="composer" type="text" maxlength="120" value="{{ values.composer }}">
+        {% if errors.get('composer') %}<p class="field__error">{{ errors.composer }}</p>{% endif %}
+      </div>
+      <div class="field{% if errors.get('notes') %} field--error{% endif %}">
+        <label for="notes">Short note <span class="optional">(optional)</span></label>
+        <input id="notes" name="notes" type="text" maxlength="200" value="{{ values.notes }}">
+        {% if errors.get('notes') %}<p class="field__error">{{ errors.notes }}</p>{% endif %}
+      </div>
+      {# [REPLACE FILE] Spacious upload area. The real <input type="file"> covers the whole box (so a click or a drop anywhere
+         works and file validation is unchanged); the script at the bottom only shows the chosen file name and size. #}
+      <div class="field ml-replace{% if errors.get('file') %} field--error{% endif %}">
+        <label for="file">Replace file <span class="optional">(optional)</span></label>
+        <div class="ml-drop ml-drop--replace" data-replace>
+          <input id="file" name="file" type="file" accept="{{ accept }}" aria-describedby="file-note">
+          <span class="ml-drop__icon" aria-hidden="true">
+            <svg class="ml-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0117.7 7.6 4.7 4.7 0 0117 18"/><path d="M12 12v8M9 14.8l3-3 3 3"/></svg>
+          </span>
+          <span class="ml-drop__text">
+            <strong data-replace-name>Choose a replacement file</strong>
+            <small data-replace-hint>{{ accept|replace('.', '')|replace(',', ', ')|upper }} &middot; up to {{ max_mb }} MB</small>
+          </span>
+          <button class="ml-drop__clear" type="button" data-replace-clear hidden>Remove</button>
+          <span class="btn btn--outline btn--sm ml-drop__browse" aria-hidden="true">
+            <svg class="ml-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A1.5 1.5 0 014.5 6h4.2l2 2.2h8.8A1.5 1.5 0 0121 9.7v8.8a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z"/></svg>
+            <span>Browse files</span>
+          </span>
+        </div>
+        <p class="ml-note" id="file-note">
+          <svg class="ml-i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+          <span>Leave empty to keep the current file.<small>People who saved the old version for offline use get the new one the next time they open the library online.</small></span>
+        </p>
+        {% if errors.get('file') %}<p class="field__error">{{ errors.file }}</p>{% endif %}
+      </div>
+      <div class="form-actions"><a class="btn btn--outline" href="{{ url_for('music_library') }}">Cancel</a><button class="btn btn--primary" type="submit">Save changes</button></div>
+    </form>
+  </section>
+
+  <script>
+    (function () {
+      var box = document.querySelector("[data-replace]");
+      if (!box) return;
+      var input = box.querySelector('input[type="file"]');
+      var name = box.querySelector("[data-replace-name]");
+      var hint = box.querySelector("[data-replace-hint]");
+      var clear = box.querySelector("[data-replace-clear]");
+      var startName = name.textContent, startHint = hint.textContent;
+      function size(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+      function show() {
+        var f = input.files && input.files[0];
+        box.classList.toggle("has-file", !!f);
+        name.textContent = f ? f.name : startName;
+        hint.textContent = f ? size(f.size) + " \u00b7 ready to replace the current file" : startHint;
+        clear.hidden = !f;
+      }
+      input.addEventListener("change", show);
+      clear.addEventListener("click", function () { input.value = ""; show(); });
+      ["dragenter", "dragover"].forEach(function (t) { box.addEventListener(t, function () { box.classList.add("is-over"); }); });
+      ["dragleave", "drop"].forEach(function (t) { box.addEventListener(t, function () { box.classList.remove("is-over"); }); });
+    })();
+  </script>
+{% endblock %}

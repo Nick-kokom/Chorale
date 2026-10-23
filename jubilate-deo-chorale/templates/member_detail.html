@@ -1,0 +1,281 @@
+{#
+  =====================================================================
+  member_detail.html - ONE MEMBER'S PROFILE
+  =====================================================================
+  Data comes from member_detail in app.py. Private parts (contact details,
+  notes) are not even loaded from the database unless your role allows it.
+
+  LAYOUT (follows the supplied design): a header, then two balanced columns of compact cards.
+    Left column   Membership information, Contact, About the member, Notes
+    Right column  Membership status, Member login, Attendance & schedule history
+    Bottom row    Record and History (only for roles that manage members)
+  On tablets and phones the two columns become one (left column first).
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [PROFILE HEADER]  Photo, name, position, member ID and the trash icon (the pencils on the cards open Edit)
+    [DETAILS]         Voice section, choir position, date joined, status
+    [CONTACT]         Email and number (restricted)
+    [PROFILE]         The member's own "About you" answers (restricted)
+    [NOTES]           Private notes (restricted)
+    [CREDENTIALS]     The one-time box showing a new password (administrators only)
+    [STATUS]          Deactivate / restore buttons
+    [LOGIN]           The Member login panel: create login / reset password
+    [HISTORY]         Where attendance and schedule history will appear later
+    [HISTORY LIST]    Everything recorded about this member
+    [RECORD]          Who added and last changed this record
+    [DELETE]          The trash icon (top right) and its confirmation dialog (end of this file)
+
+  Look and spacing: search "MEMBER DETAIL REDESIGN" in static/css/style.css.
+#}
+{% extends "base.html" %}
+{% from "_avatar.html" import person_avatar %}
+
+{% block title %}{{ member.display_name }}{% endblock %}
+{% block body_class %}page-members page-member-detail{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+
+  {# Small line icons used on this page. Use like:  {{ mdi('phone') }}  #}
+  {% macro mdi(name) %}<svg class="mdi" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    {% if name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 4.8"/>
+    {% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>
+    {% elif name == 'phone' %}<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>
+    {% elif name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>
+    {% elif name == 'doc' %}<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5"/>
+    {% elif name == 'calendar' %}<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+    {% elif name == 'shield' %}<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>
+    {% elif name == 'lock' %}<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>
+    {% elif name == 'clock' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+    {% elif name == 'info' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>
+    {% elif name == 'key' %}<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>
+    {% elif name == 'pencil' %}<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>
+    {% elif name == 'trash' %}<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>
+    {% endif %}
+  </svg>{% endmacro %}
+
+  {% macro empty_state(title, text, icon='') %}
+    <div class="empty">
+      {% if icon %}<span class="empty__icon" aria-hidden="true">{{ mdi(icon) }}</span>{% else %}<span class="empty__mark" aria-hidden="true"></span>{% endif %}
+      <p class="empty__title">{{ title }}</p>
+      <p class="empty__text">{{ text }}</p>
+    </div>
+  {% endmacro %}
+
+  {# One status button = one small POST form with a security token #}
+  {% macro status_button(label, status, style, confirm='') %}
+    <form method="post" action="{{ url_for('member_set_status', member_id=member.id) }}" {% if confirm %}data-confirm="{{ confirm }}"{% endif %}>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="status" value="{{ status }}">
+      <input type="hidden" name="return_to" value="{{ request.path }}">
+      <button class="btn {{ style }} btn--sm" type="submit">{{ label }}</button>
+    </form>
+  {% endmacro %}
+
+  {# The small pencil that opens the edit form (only for roles that can edit members) #}
+  {% macro edit_link(label) %}
+    {% if can('members.manage') %}<a class="md-edit" href="{{ url_for('member_edit', member_id=member.id) }}" aria-label="{{ label }}" title="{{ label }}">{{ mdi('pencil') }}</a>{% endif %}
+  {% endmacro %}
+
+  {# [CREDENTIALS] Shown ONCE, right after a login is created or a password is reset.
+     The password is never stored in readable form, so it cannot be shown again. #}
+  {% if credentials %}
+    <section class="credentials" role="alert" aria-labelledby="cred-title">
+      <h2 id="cred-title">Login details for {{ member.display_name }}</h2>
+      <p class="credentials__warn">Write these down or copy them now. The password is shown only once and cannot be looked up later.</p>
+      <dl class="credentials__list">
+        <div><dt>Username (Member ID)</dt><dd><code>{{ credentials.username }}</code></dd></div>
+        <div><dt>Password</dt><dd><code>{{ credentials.password }}</code></dd></div>
+      </dl>
+      <button type="button" class="btn btn--gold btn--sm"
+              data-copy="Member ID: {{ credentials.username }}&#10;Password: {{ credentials.password }}">Copy login details</button>
+    </section>
+  {% endif %}
+
+  {# [PROFILE HEADER] Photo, name, ID and status on the left. Edit button and trash icon on the right. #}
+  <header class="page-head md-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list') }}">&larr; Members</a></p>
+    <div class="profile__head md-head__row">
+      {{ person_avatar(url_for('member_photo', member_id=member.id) if member.photo_ok else '', member.display_name, 'avatar--lg md-head__avatar') }}
+      <div class="md-head__id">
+        <h1 class="profile__name">{{ member.display_name }}</h1>
+        <p class="profile__meta">
+          <span class="badge badge--{{ member.status }}" title="Membership status: {{ member.status|status_label }}">{{ member.position_name }}</span>
+          <span class="md-dot" aria-hidden="true">&bull;</span>
+          <span class="mono">{{ member.member_code }}</span>
+        </p>
+      </div>
+      <div class="profile__actions md-head__actions">
+        {# [DELETE] Small trash icon with a tooltip. It only OPENS the confirmation dialog (end of this file). #}
+        {% if can('members.delete') %}
+          <button type="button" class="icon-btn icon-btn--danger" data-dialog-open="delete-dialog" aria-haspopup="dialog" aria-label="Delete member">
+            {{ mdi('trash') }}
+            <span class="icon-btn__tip" aria-hidden="true">Delete member</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="md-grid">
+
+    {# ============================ LEFT COLUMN ============================ #}
+    <div class="stack md-col">
+
+      {# [DETAILS] #}
+      <article class="panel md-card">
+        <header class="panel__head md-card__head"><h2>{{ mdi('users') }}<span>Membership information</span></h2>{{ edit_link('Edit membership information') }}</header>
+        <dl class="details">
+          {# [VOICE SECTION], [CHOIR POSITION] and [MEMBERSHIP STATUS] as shown on the profile (the lines below). Delete a line to hide it here. #}
+          <div><dt>Voice section</dt><dd class="details__strong">{{ member.voice_name }}</dd></div>
+          <div><dt>Choir position</dt><dd class="details__strong">{{ member.position_name }}</dd></div>
+          <div><dt>Date joined</dt><dd>{{ mdi('calendar') }}<span>{{ member.date_joined|pretty_date }}</span></dd></div>
+          <div><dt>Status</dt><dd><span class="badge badge--{{ member.status }}">{{ member.status|status_label }}</span></dd></div>
+        </dl>
+      </article>
+
+      {# [CONTACT] Real values only for roles allowed to see them #}
+      <article class="panel md-card">
+        <header class="panel__head md-card__head"><h2>{{ mdi('phone') }}<span>Contact information</span></h2>{% if can_private %}<span class="panel__meta">Private</span>{% endif %}</header>
+        {% if can_private %}
+          <dl class="details">
+            <div><dt>Email</dt><dd>{{ mdi('mail') }}{% if member.email %}<a href="mailto:{{ member.email }}">{{ member.email }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+            <div><dt>Contact number</dt><dd>{{ mdi('phone') }}{% if member.phone %}<a href="tel:{{ member.phone }}">{{ member.phone }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+          </dl>
+        {% else %}
+          {{ empty_state("Contact details are restricted", "Only administrators can see email addresses and contact numbers.") }}
+        {% endif %}
+      </article>
+
+      {# [PROFILE] The member's own "About you" answers. Same restriction as contact details. #}
+      {% if can_private %}
+        <article class="panel md-card">
+          <header class="panel__head md-card__head"><h2>{{ mdi('user') }}<span>About the member</span></h2><span class="panel__meta">Private</span></header>
+          {% if profile %}
+            <dl class="details">
+              <div><dt>Full name</dt><dd class="details__strong">{{ profile.full_name }}</dd></div>
+              <div><dt>Nickname</dt><dd>{{ profile.nickname }}</dd></div>
+              <div><dt>Birthday</dt><dd>{{ mdi('calendar') }}<span>{{ profile.birthday|pretty_date }}{% if profile.age is not none %} &middot; {{ profile.age }} years old{% endif %}</span></dd></div>
+              <div><dt>Facebook</dt><dd>{% if profile.facebook_link %}<a href="{{ profile.facebook_link }}" target="_blank" rel="noopener noreferrer">{{ profile.facebook_link }}</a>{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+            </dl>
+            <h3 class="md-sub">Why they want to join</h3>
+            <p class="notes">{{ profile.reason }}</p>
+          {% else %}
+            {{ empty_state("Not filled in yet", "The member is asked to complete this form the first time they sign in.") }}
+          {% endif %}
+        </article>
+      {% endif %}
+
+      {# [NOTES] Only for roles allowed to see notes. Other roles never receive them. #}
+      {% if can_notes %}
+        <article class="panel md-card">
+          <header class="panel__head md-card__head"><h2>{{ mdi('doc') }}<span>Notes</span></h2><span class="md-head-tools"><span class="panel__meta">Private</span>{{ edit_link('Edit notes') }}</span></header>
+          {% if member.notes %}<p class="notes">{{ member.notes }}</p>{% else %}<p class="muted">No notes.</p>{% endif %}
+        </article>
+      {% endif %}
+    </div>
+
+    {# ============================ RIGHT COLUMN ============================ #}
+    <div class="stack md-col">
+
+      {# [STATUS] Only for roles allowed to change status #}
+      {% if can('members.manage') %}
+        <article class="panel md-card">
+          {# [MEMBERSHIP STATUS] panel: the buttons that change the status (they act through the status route in app.py). #}
+          <header class="panel__head md-card__head"><h2>{{ mdi('shield') }}<span>Membership status</span></h2></header>
+          <p class="muted">Deactivating keeps this member's record, photo and any future attendance and schedule history. Nothing is deleted, and you can restore them at any time.</p>
+          <div class="status-actions">
+            {% if member.status == 'active' %}
+              {{ status_button('Mark temporarily inactive', 'temporarily_inactive', 'btn--outline') }}
+              {{ status_button('Deactivate', 'inactive', 'btn--soft', 'Deactivate ' ~ member.display_name ~ '? Their record and history are kept, and you can restore them at any time.') }}
+            {% elif member.status == 'temporarily_inactive' %}
+              {{ status_button('Restore as active', 'active', 'btn--primary') }}
+              {{ status_button('Deactivate', 'inactive', 'btn--soft', 'Deactivate ' ~ member.display_name ~ '? Their record and history are kept, and you can restore them at any time.') }}
+            {% else %}
+              {{ status_button('Restore as active', 'active', 'btn--primary') }}
+            {% endif %}
+          </div>
+        </article>
+      {% endif %}
+
+      {# [LOGIN] Only for roles allowed to manage credentials (administrators).
+         The password is generated once and stays the same for now ("Permanent"): members cannot change it themselves
+         (MEMBER_PASSWORD_CHANGE_ENABLED in app.py), and only an administrator can reset it. Only a hash is stored. #}
+      {% if can('members.credentials') %}
+        <article class="panel md-card" id="login">
+          <header class="panel__head md-card__head"><h2>{{ mdi('lock') }}<span>Member login</span></h2></header>
+          {% if account %}
+            <dl class="details details--single md-login">
+              <div><dt>Username</dt><dd>{{ mdi('user') }}<span class="mono">{{ account.username }}</span></dd></div>
+              <div><dt>Password</dt>
+                <dd>{{ mdi('lock') }}<span class="md-mask" aria-label="Hidden for security">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+                  {% if not member_password_change_enabled %}<span class="md-pill">Permanent</span><span class="md-info" tabindex="0" role="img" aria-label="Members cannot change this password yet. It stays the same until an administrator resets it." title="Members cannot change this password yet. It stays the same until an administrator resets it.">{{ mdi('info') }}</span>
+                  {% elif account.must_change_password %}<span class="md-pill md-pill--temp" title="The member will be asked to choose their own password.">Temporary</span>{% endif %}</dd></div>
+              <div><dt>Password last generated</dt><dd>{{ mdi('calendar') }}<span>{{ account.password_set_at|pretty_stamp }}</span></dd></div>
+            </dl>
+            <p class="muted">Only an admin can reset the password if needed. Only a scrambled (hashed) version is kept, so it can't be looked up.</p>
+            <form method="post" action="{{ url_for('member_login_reset', member_id=member.id) }}"
+                  data-confirm="Generate a new password for {{ member.display_name }}? Their current password will stop working.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn--outline btn--sm md-reset" type="submit">{{ mdi('key') }} Reset password</button>
+            </form>
+          {% else %}
+            <p class="muted">This member has no login yet. Creating one uses their Member ID as the username and generates an 8-character password.</p>
+            <form method="post" action="{{ url_for('member_login_reset', member_id=member.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn--primary btn--sm" type="submit">Create login</button>
+            </form>
+          {% endif %}
+          <p class="muted login-note">{% if member_login_enabled %}Member sign-in is switched on.{% else %}Members cannot sign in yet. Logins are ready for when the member area is built (see MEMBER_LOGIN_ENABLED in app.py).{% endif %}</p>
+        </article>
+      {% endif %}
+
+      {# [HISTORY] Placeholder: attendance and schedules are separate modules, built later #}
+      <article class="panel md-card">
+        <header class="panel__head md-card__head"><h2>{{ mdi('calendar') }}<span>Attendance &amp; schedule history</span></h2></header>
+        {{ empty_state("Nothing recorded yet", "Attendance and schedule history will appear here once those features are added. It is kept even if this member becomes inactive.", "calendar") }}
+      </article>
+    </div>
+  </section>
+
+  {# Extra cards for people who manage members: the record trail and the history list #}
+  {% if can('members.manage') %}
+  <section class="md-grid md-grid--extra">
+    <div class="stack md-col">
+      {# [RECORD] Who created and last changed this record (managers only) #}
+      {% if can('members.manage') %}
+        <article class="panel md-card">
+          <header class="panel__head md-card__head"><h2>{{ mdi('info') }}<span>Record</span></h2></header>
+          <dl class="details details--single">
+            <div><dt>Added</dt><dd>{{ member.created_at|pretty_stamp }}{% if added_by %} by {{ added_by }}{% endif %}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ member.updated_at|pretty_stamp }}{% if updated_by %} by {{ updated_by }}{% endif %}</dd></div>
+          </dl>
+        </article>
+      {% endif %}
+    </div>
+    <div class="stack md-col">
+      {# [HISTORY LIST] Everything recorded about this member (managers only) #}
+      {% if can('members.manage') %}
+        <article class="panel md-card">
+          <header class="panel__head md-card__head"><h2>{{ mdi('clock') }}<span>History</span></h2></header>
+          {% include "_member_history.html" %}
+        </article>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# [DELETE] The confirmation dialog for the trash icon. Posting here runs member_delete in app.py, which moves the
+     member to the Archive (nothing is erased). Only roles with "members.delete" ever see the icon or this dialog. #}
+  {% if can('members.delete') %}
+    {% with dialog_id='delete-dialog',
+            action=url_for('member_delete', member_id=member.id),
+            title='Delete ' ~ member.display_name ~ '?',
+            text='They will lose access straight away and disappear from the roster and the member counts. Nothing is erased: you can restore them, or delete them permanently, from the Archive.',
+            button='Delete member' %}
+      {% include "_confirm_dialog.html" %}
+    {% endwith %}
+  {% endif %}
+
+{% endblock %}

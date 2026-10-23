@@ -1,0 +1,88 @@
+{#
+  member_welcome.html - "ABOUT YOU" FORM, shown once after a member's first sign-in.
+  The dashboard stays closed until it is saved. Rules are in read_profile_form() in app.py.
+#}
+{% extends "member_base.html" %}
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+  <header class="page-head welcome-head">
+    <p class="page-head__date">First sign-in</p>
+    <h1>Welcome to Jubilate Deo Chorale</h1>
+    <p class="page-head__lead">Before you continue, please tell us a little about yourself. You only need to do this once.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+    <p class="page-head__note">Fields marked <span class="req">*</span> are required.</p>
+  </header>
+
+  <section class="panel narrow welcome-card">
+    <form method="post" action="{{ url_for('member_profile_setup') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {# Full name: filled in from what the administrator typed; correct it if it is wrong #}
+      <div class="field{% if errors.first_name %} field--error{% endif %}">
+        <label for="first_name">First name <span class="req" aria-hidden="true">*</span></label>
+        <input id="first_name" name="first_name" type="text" maxlength="60" autocomplete="given-name" required value="{{ values.first_name or '' }}">
+        {% if errors.first_name %}<p class="field__error">{{ errors.first_name }}</p>{% endif %}
+      </div>
+      <div class="field{% if errors.middle_name %} field--error{% endif %}">
+        <label for="middle_name">Middle name <span class="muted">(optional)</span></label>
+        <input id="middle_name" name="middle_name" type="text" maxlength="60" autocomplete="additional-name" value="{{ values.middle_name or '' }}">
+        {% if errors.middle_name %}<p class="field__error">{{ errors.middle_name }}</p>{% endif %}
+      </div>
+      <div class="field{% if errors.last_name %} field--error{% endif %}">
+        <label for="last_name">Last name <span class="req" aria-hidden="true">*</span></label>
+        <input id="last_name" name="last_name" type="text" maxlength="60" autocomplete="family-name" required value="{{ values.last_name or '' }}">
+        {% if errors.last_name %}<p class="field__error">{{ errors.last_name }}</p>{% endif %}
+      </div>
+
+      <div class="field{% if errors.nickname %} field--error{% endif %}">
+        <label for="nickname">Nickname <span class="req" aria-hidden="true">*</span></label>
+        <input id="nickname" name="nickname" type="text" maxlength="60" autocomplete="nickname" required value="{{ values.nickname or '' }}">
+        {% if errors.nickname %}<p class="field__error">{{ errors.nickname }}</p>{% endif %}
+      </div>
+
+      {# Birthday: the age is worked out from it (shown live; the server recalculates it when saving) #}
+      <div class="field-row">
+        <div class="field{% if errors.birthday %} field--error{% endif %}">
+          <label for="birthday">Birthday <span class="req" aria-hidden="true">*</span></label>
+          <input id="birthday" name="birthday" type="date" min="1900-01-01" max="{{ today_iso }}" autocomplete="bday" required data-birthday value="{{ values.birthday or '' }}">
+          {% if errors.birthday %}<p class="field__error">{{ errors.birthday }}</p>{% endif %}
+        </div>
+        <div class="field">
+          <label for="age">Age <span class="req" aria-hidden="true">*</span></label>
+          <input id="age" type="text" readonly tabindex="-1" placeholder="Automatic" data-age-output aria-describedby="age-hint">
+          <p class="field__hint" id="age-hint">Filled in from your birthday.</p>
+        </div>
+      </div>
+
+      <div class="field{% if errors.email %} field--error{% endif %}">
+        <label for="email">Email address <span class="req" aria-hidden="true">*</span></label>
+        <input id="email" name="email" type="email" maxlength="254" autocomplete="email" required value="{{ values.email or '' }}">
+        {% if errors.email %}<p class="field__error">{{ errors.email }}</p>{% endif %}
+      </div>
+
+      <div class="field{% if errors.phone %} field--error{% endif %}">
+        <label for="phone">Contact number <span class="req" aria-hidden="true">*</span></label>
+        <input id="phone" name="phone" type="tel" maxlength="20" autocomplete="tel" required value="{{ values.phone or '' }}">
+        {% if errors.phone %}<p class="field__error">{{ errors.phone }}</p>{% endif %}
+      </div>
+
+      <div class="field{% if errors.fb_link %} field--error{% endif %}">
+        <label for="fb_link">Facebook link <span class="req" aria-hidden="true">*</span></label>
+        <input id="fb_link" name="fb_link" type="text" maxlength="300" inputmode="url" required value="{{ values.fb_link or '' }}">
+        <p class="field__hint">Link to your Facebook profile, for example facebook.com/yourname</p>
+        {% if errors.fb_link %}<p class="field__error">{{ errors.fb_link }}</p>{% endif %}
+      </div>
+
+      <div class="field{% if errors.join_reason %} field--error{% endif %}">
+        <label for="join_reason">Why do you want to join the choir? <span class="req" aria-hidden="true">*</span></label>
+        <textarea id="join_reason" name="join_reason" rows="5" maxlength="{{ reason_max }}" required>{{ values.join_reason or '' }}</textarea>
+        {% if errors.join_reason %}<p class="field__error">{{ errors.join_reason }}</p>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit">Save and continue</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

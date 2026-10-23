@@ -1,0 +1,133 @@
+{#
+  =====================================================================
+  member_archive_detail.html - ONE DELETED MEMBER (archive record)
+  =====================================================================
+  Administrators can still see everything about a deleted member here:
+  details, when they were added and deleted, and their full history.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [HEADER]    Photo, name, Member ID, and the Restore button
+    [DETAILS]   Voice section, position, date joined, status when deleted
+    [CONTACT]   Email and number
+    [NOTES]     Private notes
+    [RECORD]    When added, when deleted, by whom, and login state
+    [HISTORY]   Everything that was recorded about this member
+    [PURGE]     "Delete permanently" (needs the Member ID typed to confirm)
+#}
+{% extends "base.html" %}
+
+{% block title %}{{ member.display_name }} (archived){% endblock %}
+{% block body_class %}page-members page-archive{% endblock %}
+{% block nav_archive %}is-active{% endblock %}
+
+{% block content %}
+
+  {# [HEADER] #}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('members_archive') }}">&larr; Archive</a></p>
+    <div class="profile__head">
+      <div class="avatar avatar--lg" aria-hidden="true">{% if member.has_photo %}<img src="{{ url_for('member_photo', member_id=member.id) }}" alt="">{% else %}{{ member.initials }}{% endif %}</div>
+      <div>
+        <h1 class="profile__name">{{ member.display_name }}</h1>
+        <p class="profile__meta">
+          <span class="mono">{{ member.member_code }}</span>
+          <span class="badge badge--archived">In archive</span>
+        </p>
+      </div>
+      <div class="profile__actions">
+        <form method="post" action="{{ url_for('member_restore_archived', member_id=member.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--primary" type="submit">Restore member</button>
+        </form>
+      </div>
+    </div>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <div class="flash flash--info archive-notice" role="note">
+    <span>This member was deleted on <strong>{{ member.deleted_at|pretty_stamp }}</strong>{% if deleted_by %} by <strong>{{ deleted_by }}</strong>{% endif %}. They cannot sign in and no longer appear in the roster. Restore them to bring them back, or delete them permanently below.</span>
+  </div>
+
+  <section class="dash-cols">
+    <div class="stack">
+
+      {# [DETAILS] #}
+      <article class="panel">
+        <header class="panel__head"><h2>Membership</h2></header>
+        <dl class="details">
+          {# [VOICE SECTION], [CHOIR POSITION] and [MEMBERSHIP STATUS] (status when deleted) as shown in the archive. #}
+          <div><dt>Voice section</dt><dd>{{ member.voice_name }}</dd></div>
+          <div><dt>Choir position</dt><dd>{{ member.position_name }}</dd></div>
+          <div><dt>Date joined</dt><dd>{{ member.date_joined|pretty_date }}</dd></div>
+          <div><dt>Status when deleted</dt><dd><span class="badge badge--{{ member.status }}">{{ member.status|status_label }}</span></dd></div>
+        </dl>
+      </article>
+
+      {# [CONTACT] #}
+      {% if can_private %}
+        <article class="panel">
+          <header class="panel__head"><h2>Contact</h2><span class="panel__meta">Private</span></header>
+          <dl class="details">
+            <div><dt>Email</dt><dd>{% if member.email %}{{ member.email }}{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+            <div><dt>Contact number</dt><dd>{% if member.phone %}{{ member.phone }}{% else %}<span class="muted">Not provided</span>{% endif %}</dd></div>
+          </dl>
+        </article>
+      {% endif %}
+
+      {# [NOTES] #}
+      {% if can_notes %}
+        <article class="panel">
+          <header class="panel__head"><h2>Notes</h2><span class="panel__meta">Private</span></header>
+          {% if member.notes %}<p class="notes">{{ member.notes }}</p>{% else %}<p class="muted">No notes.</p>{% endif %}
+        </article>
+      {% endif %}
+
+      {# [PURGE] The only place where anything is erased for good #}
+      {% if can('members.purge') %}
+        <article class="panel danger-zone" id="purge">
+          <header class="panel__head"><h2>Delete permanently</h2></header>
+          <p>This erases {{ member.display_name }}'s record, photo and login for good. <strong>It cannot be undone.</strong> Their history keeps only the Member ID and the dates, so there is still a record that it happened. The Member ID is never given to anyone else.</p>
+          <form method="post" action="{{ url_for('member_purge', member_id=member.id) }}" novalidate data-validate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+              <label for="confirm_code">Type <strong class="mono">{{ member.member_code }}</strong> to confirm</label>
+              <input id="confirm_code" name="confirm_code" type="text" required autocomplete="off" autocapitalize="characters" spellcheck="false"
+                     data-must-match="{{ member.member_code }}">
+            </div>
+            <p class="danger-zone__action"><button class="btn btn--danger" type="submit">Delete permanently</button></p>
+          </form>
+        </article>
+      {% endif %}
+    </div>
+
+    <div class="stack">
+
+      {# [RECORD] #}
+      <article class="panel">
+        <header class="panel__head"><h2>Record</h2></header>
+        <dl class="details details--single">
+          <div><dt>Added</dt><dd>{{ member.created_at|pretty_stamp }}{% if added_by %} by {{ added_by }}{% endif %}</dd></div>
+          <div><dt>Last updated</dt><dd>{{ member.updated_at|pretty_stamp }}{% if updated_by %} by {{ updated_by }}{% endif %}</dd></div>
+          <div><dt>Deleted</dt><dd>{{ member.deleted_at|pretty_stamp }}{% if deleted_by %} by {{ deleted_by }}{% endif %}</dd></div>
+          <div><dt>Login</dt><dd>{% if account %}<span class="mono">{{ account.username }}</span> &middot; <span class="muted">blocked while in the archive</span>{% else %}<span class="muted">No login</span>{% endif %}</dd></div>
+        </dl>
+      </article>
+
+      {# [HISTORY] #}
+      <article class="panel">
+        <header class="panel__head"><h2>History</h2></header>
+        {% include "_member_history.html" %}
+      </article>
+
+      <article class="panel">
+        <header class="panel__head"><h2>Attendance &amp; schedule history</h2></header>
+        <div class="empty">
+          <span class="empty__mark" aria-hidden="true"></span>
+          <p class="empty__title">Nothing recorded yet</p>
+          <p class="empty__text">Attendance and schedule history will appear here once those features are added.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+{% endblock %}

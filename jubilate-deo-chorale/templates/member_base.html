@@ -1,0 +1,192 @@
+{#
+  =====================================================================
+  member_base.html - THE LAYOUT OF THE MEMBERS' OWN AREA
+  =====================================================================
+  Every member page (dashboard, password, secretary tools) is built on this file.
+  It is separate from base.html, which is the administrator layout.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [BACKGROUND]   The faded logo behind everything
+    [TOP BAR]      Greeting (top left, supplied by each page) and the member's profile photo + menu (top right)
+    [LEFT MENU]    Dashboard, Members, Voice... and Sign out (bottom left)
+    [MENU TAB]     The slim vertical "MENU" tab on the menu's right edge (collapses / opens the left menu)
+    [TAGLINE]      The italic tagline at the bottom centre
+    [LOCKED]       Menu items that are not available yet (remove "locked" to open one later)
+
+  Colours, sizes and the background brightness: static/css/member.css
+#}
+{% from "_avatar.html" import person_avatar %}
+{% macro icon(name) %}
+  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    {% if name == 'home' %}<path d="M3 11l9-8 9 8M5 10v10h14V10"/>
+    {% elif name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 4.8"/>
+    {% elif name == 'mic' %}<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>
+    {% elif name == 'star' %}<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>
+    {% elif name == 'flag' %}<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>
+    {% elif name == 'game' %}<rect x="3" y="7" width="18" height="10" rx="5"/><path d="M8 10v4M6 12h4M15.5 11h.01M18 13h.01"/>
+    {% elif name == 'lock' %}<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>
+    {% elif name == 'out' %}<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>
+    {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+    {% elif name == 'folder' %}<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    {% elif name == 'file' %}<path d="M6 3h8l4 4v14H6zM14 3v4h4"/>
+    {% elif name == 'download' %}<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>
+    {% elif name == 'upload' %}<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>
+    {% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>
+    {% elif name == 'coins' %}<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+    {% elif name == 'sitemap' %}<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>
+    {% elif name == 'check' %}<path d="M5 12.5l4.2 4.2L19 7"/>
+    {% elif name == 'calendar' %}<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+    {% elif name == 'chevron' %}<path d="M15 6l-6 6 6 6"/>
+    {% elif name == 'close' %}<path d="M6 6l12 12M18 6L6 18"/>
+    {% elif name == 'wallet' %}<path d="M4 7a2 2 0 012-2h12v4M4 7v10a2 2 0 002 2h14V9H6a2 2 0 01-2-2z"/><circle cx="16.5" cy="14" r="1"/>
+    {% elif name == 'shield' %}<path d="M12 3l7 3v5.2c0 4.4-3 8-7 9.8-4-1.8-7-5.4-7-9.8V6z"/><path d="M9.2 11.8l2 2 3.6-3.8"/>
+    {% elif name == 'caret' %}<path d="M6 9.5l6 6 6-6"/>
+    {% elif name == 'search' %}<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>
+    {% endif %}
+  </svg>
+{% endmacro %}
+
+{# [DEFAULT AVATAR] The signed-in member's own picture (top bar and profile menu). No photo, or a photo that
+   cannot be loaded, shows the default silhouette (templates/_avatar.html). #}
+{% macro avatar(size='md') %}
+  {{ person_avatar(url_for('member_my_photo') if photo_file_ok(me.photo_filename) else '', me.first_name ~ ' ' ~ me.last_name, 'avatar--' ~ size, decorative=True) }}
+{% endmacro %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>{% block title %}Member area{% endblock %} | {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+  {% block head_extra %}{% endblock %}
+
+  {# [SIDEBAR STATE] Runs before the page is drawn: if the left menu was last collapsed, the page starts collapsed.
+     Same browser setting as the administrator menu (localStorage "jdc.sidebar"); the button is handled in app.js. #}
+  {% if not minimal %}
+  <script>
+    (function () {
+      try { if (localStorage.getItem("jdc.sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed"); }
+      catch (e) { /* storage blocked: the menu simply starts open */ }
+    })();
+  </script>
+  {% endif %}
+</head>
+<body class="member-body {% block body_class %}{% endblock %}" data-sw="{{ url_for('member_service_worker') }}">
+
+  {# [BACKGROUND] Your logo, very faded, behind the page. Brightness: --bg-logo-opacity in member.css #}
+  {% if has_logo %}
+    <div class="member-bg" aria-hidden="true"><img src="{{ url_for('static', filename='images/logo.png') }}" alt=""></div>
+  {% endif %}
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {# [TOP BAR] logo on the left, the member's profile photo on the right #}
+  <header class="mtop">
+    {% if not minimal %}
+      <button class="menu-btn menu-btn--light" type="button" data-menu-toggle aria-controls="sidebar" aria-expanded="false">
+        <span class="menu-btn__bars" aria-hidden="true"></span><span class="sr-only">Open menu</span>
+      </button>
+    {% endif %}
+    <a class="mtop__brand" href="{{ url_for('member_home') }}" aria-label="{{ app_name }} home">
+      {% if has_logo %}<img class="mtop__logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ app_name }} logo">
+      {% else %}<span class="logo logo--sm logo--placeholder mtop__logo"><span>JDC</span></span>{% endif %}
+    </a>
+
+    {# Each page may put its heading here (member_home.html adds the greeting). It stays visible while the page scrolls. #}
+    <div class="mtop__title">{% block topbar_title %}{% endblock %}</div>
+
+    <div class="mtop__profile" data-dropdown>
+      <button class="avatar-btn" type="button" data-dropdown-toggle aria-expanded="false" aria-controls="profile-menu" aria-label="Open profile menu">
+        {{ avatar('md') }}{{ icon('caret') }}
+      </button>
+      <div class="dropdown" id="profile-menu" data-dropdown-menu hidden>
+        <div class="dropdown__head">
+          {{ avatar('md') }}
+          <div class="dropdown__who">
+            <p class="dropdown__name">{{ me.first_name }} {{ me.last_name }}</p>
+            <p class="dropdown__meta"><span class="mono">{{ me.member_code }}</span></p>
+            <p class="dropdown__meta">{{ me.position_name }} &middot; {{ me.voice_name }}</p>
+          </div>
+        </div>
+        <a class="dropdown__item" href="{{ url_for('member_profile') }}">{{ icon('user') }} Edit my information</a>
+        {% if member_password_change_enabled %}<a class="dropdown__item" href="{{ url_for('member_password') }}">{{ icon('check') }} Change password</a>{% endif %}
+        {# Same logout route and CSRF token as the left menu's Sign out button #}
+        <form class="dropdown__signout-form" method="post" action="{{ url_for('logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="dropdown__signout" type="submit">{{ icon('out') }}<span>Sign out</span></button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <div class="mshell {% if minimal %}mshell--minimal{% endif %}">
+    {% if not minimal %}
+      {# [LEFT MENU] #}
+      <aside class="msidebar" id="sidebar" aria-label="Main menu">
+        {# Logo, choir name and the close button (phone / tablet drawer). Collapsing is done by the MENU tab below #}
+        <div class="msidebar__brand">
+          <a class="msidebar__logo" href="{{ url_for('member_home') }}" aria-label="{{ app_name }} home">
+            {% if has_logo %}<img src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ app_name }} logo">
+            {% else %}<span class="msidebar__logo-text">JDC</span>{% endif %}
+          </a>
+          <div class="msidebar__titles">
+            <p class="msidebar__name">Jubilate Deo</p>
+            <p class="msidebar__sub">Chorale</p>
+          </div>
+          <button class="msidebar__close" type="button" data-menu-close aria-label="Close menu">{{ icon('close') }}</button>
+        </div>
+
+        <nav class="mnav">
+          <a class="mnav__item {% block nav_home %}{% endblock %}" href="{{ url_for('member_home') }}" data-label="Dashboard">{{ icon('home') }}<span class="mnav__label">My View</span></a>
+          {% if member_can('panel.schedule') or member_can('schedule.manage') %}<a class="mnav__item {% block nav_schedule %}{% endblock %}" href="{{ url_for('schedule_list') }}" data-label="Schedule">{{ icon('calendar') }}<span class="mnav__label">Schedule</span></a>{% endif %}
+          {# [LOCKED] These sections are not built yet. When one is ready, turn its <span> into an <a href="..."> link. #}
+          {% if member_can('panel.music') %}<a class="mnav__item {% block nav_music %}{% endblock %}" href="{{ url_for('music_library') }}" data-label="Music Library">{{ icon('music') }}<span class="mnav__label">Library</span></a>{% endif %}
+          {% if member_can('panel.directory') or member_can('panel.general_files') or member_can('panel.voice_files') %}<a class="mnav__item {% block nav_members %}{% endblock %}" href="{{ url_for('choir_members') }}" data-label="Members">{{ icon('users') }}<span class="mnav__label">Members</span></a>{% endif %}
+          <span class="mnav__item mnav__item--locked" aria-disabled="true" data-label="Voice (coming soon)">{{ icon('mic') }}<span class="mnav__label">Voice</span><span class="mnav__lock">{{ icon('lock') }}</span></span>
+          <span class="mnav__item mnav__item--locked" aria-disabled="true" data-label="Evaluation (coming soon)">{{ icon('star') }}<span class="mnav__label">Evaluation</span><span class="mnav__lock">{{ icon('lock') }}</span></span>
+          <span class="mnav__item mnav__item--locked" aria-disabled="true" data-label="Report (coming soon)">{{ icon('flag') }}<span class="mnav__label">Report</span><span class="mnav__lock">{{ icon('lock') }}</span></span>
+          <span class="mnav__item mnav__item--locked" aria-disabled="true" data-label="Game (coming soon)">{{ icon('game') }}<span class="mnav__label">Game</span><span class="mnav__lock">{{ icon('lock') }}</span></span>
+        </nav>
+
+        {# Sign out (the signed-in member is shown in the top bar) #}
+        <div class="msidebar__foot">
+          <form class="msidebar__out" method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="mnav__item mnav__item--out" type="submit" data-label="Sign out" aria-label="Sign out">{{ icon('out') }}<span class="mnav__label">Sign out</span></button>
+          </form>
+        </div>
+      </aside>
+
+      {# [MENU TAB] Slim vertical tab on the menu's right edge. Desktop: collapses / expands the menu to an icon rail.
+         Phone / tablet: opens the menu drawer. Behaviour lives in app.js (data-sidebar-collapse); look in member.css. #}
+      <button class="sidebar-tab" type="button" data-sidebar-collapse aria-expanded="true" aria-controls="sidebar" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <span class="sidebar-tab__icon" aria-hidden="true">{{ icon('shield') }}</span>
+        <span class="sidebar-tab__text" aria-hidden="true">Menu</span>
+      </button>
+    {% endif %}
+
+    <main id="main" class="mmain">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes" aria-live="polite">
+            {% for category, message in messages %}
+              <div class="flash flash--{{ category }}" role="status"><span>{{ message }}</span>
+                <button type="button" class="flash__close" data-dismiss aria-label="Dismiss message">&times;</button></div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <div class="scrim" data-menu-scrim hidden></div>
+
+  {# [TAGLINE] #}
+  <footer class="mfoot"><p>{{ tagline }}</p></footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

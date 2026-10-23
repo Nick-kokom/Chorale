@@ -1,0 +1,110 @@
+{#
+  schedule_detail.html - ONE ACTIVITY
+  Everyone who can open the schedule can read this page. Only people who may manage the schedule see
+  Edit / Cancel. "Take attendance" is for members whose position has the attendance right (the secretary).
+  [FACTS] when, where, who    [ATTENDANCE] link to the Attendance module    [MANAGE] edit and cancel
+#}
+{% extends layout %}
+{% from "_schedule_macros.html" import cat_badge %}
+{% block title %}{{ a.title }}{% endblock %}
+{% block body_class %}page-schedule{% endblock %}
+{% block nav_schedule %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head page-head--split">
+    <div>
+      <p class="page-head__date"><a class="back-link" href="{{ url_for('schedule_list') }}">&larr; Schedule</a></p>
+      <h1>{{ a.title }}</h1>
+      <p class="sch-row__tags">{{ cat_badge(a) }}{% if a.cancelled %} <span class="badge badge--inactive">Cancelled</span>{% elif a.past %} <span class="badge badge--archived">Past</span>{% endif %}</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+    {% if can_manage %}
+      <div class="page-head__actions"><a class="btn btn--outline" href="{{ url_for('schedule_edit', activity_id=a.id) }}">Edit</a></div>
+    {% endif %}
+  </header>
+
+  {% if a.cancelled %}
+    <div class="sch-notice" role="status"><strong>This activity was cancelled.</strong>{% if a.reason %} Reason: {{ a.reason }}{% endif %}</div>
+  {% endif %}
+
+  {# [LINKED ANNOUNCEMENT] Shown when this activity was created together with an announcement #}
+  {% if announcement %}
+    <div class="sch-linked" role="note">
+      <span class="badge badge--linked">From announcement</span>
+      <p>Created with the announcement <strong>{{ announcement.title }}</strong>{% if not announcement.is_active %} (no longer showing){% endif %}.
+        Retiring an announcement does not remove its event.
+        {% if can('announcements.manage') %}<a href="{{ url_for('announcements_admin') }}">Open Announcements</a>{% endif %}</p>
+    </div>
+  {% endif %}
+
+  {# [FACTS] #}
+  <section class="panel panel--wide">
+    <dl class="sch-facts">
+      <div><dt>Date</dt><dd>{{ a.date_label }}</dd></div>
+      <div><dt>Time</dt><dd>{{ a.time or 'Not set' }}</dd></div>
+      <div><dt>Venue</dt><dd>{{ a.venue or 'Not set' }}</dd></div>
+      <div><dt>Who it is for</dt><dd>{{ a.audience }}</dd></div>
+    </dl>
+    <h2 class="sch-sub">Instructions</h2>
+    {% if a.instructions %}<p class="sch-text">{{ a.instructions }}</p>{% else %}<p class="muted">No special instructions.</p>{% endif %}
+    {% if can_manage %}<p class="muted sch-meta">Last changed {{ meta.updated_at|pretty_stamp }} &middot; version {{ meta.version }}</p>{% endif %}
+  </section>
+
+  {# [ATTENDANCE] Connected to the Attendance module #}
+  {% if attendance or can_take %}
+    <section class="panel panel--wide" aria-labelledby="att-h">
+      <header class="panel__head"><h2 id="att-h">Attendance</h2></header>
+      {% if attendance and attendance.marked %}
+        <p class="sch-text">{{ attendance.attended }} of {{ attendance.marked }} recorded members attended
+          ({{ attendance.excused }} excused, {{ attendance.absent }} absent).</p>
+      {% elif attendance %}
+        <p class="muted">The attendance sheet is open, but nobody has been marked yet.</p>
+      {% else %}
+        <p class="muted">Attendance has not been taken for this activity.</p>
+      {% endif %}
+      {% if can_take %}
+        <form method="post" action="{{ url_for('schedule_attendance', activity_id=a.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--primary btn--sm" type="submit">{{ 'Open attendance sheet' if attendance else 'Take attendance' }}</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {# [MANAGE] Cancelling keeps the record and its attendance; it can be undone #}
+  {% if can_manage %}
+    <section class="panel panel--wide danger-zone">
+      <header class="panel__head"><h2>{{ 'Restore' if a.cancelled else 'Cancel this activity' }}</h2></header>
+      {% if a.cancelled %}
+        <p class="muted">Bring this activity back on the schedule.</p>
+        <form method="post" action="{{ url_for('schedule_cancel', activity_id=a.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="restore" value="1">
+          <button class="btn btn--outline btn--sm" type="submit">Restore activity</button>
+        </form>
+      {% else %}
+        <p class="muted">Members will see it marked as cancelled. Nothing is deleted, and you can restore it later.</p>
+        <form method="post" action="{{ url_for('schedule_cancel', activity_id=a.id) }}" class="sch-cancel" data-confirm="Cancel {{ a.title }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field">
+            <label for="reason">Reason <span class="optional">(optional)</span></label>
+            <input id="reason" name="reason" type="text" maxlength="200" placeholder="For example: Typhoon signal, moved to next week">
+          </div>
+          <button class="btn btn--danger-outline btn--sm" type="submit">Cancel activity</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {# [DELETE] Administrator only. Unlike Cancel, this really removes the activity. #}
+  {% if can('schedule.clear') %}
+    <section class="panel panel--wide danger-zone">
+      <header class="panel__head"><h2>Delete permanently</h2></header>
+      <p class="muted">Removes this activity from the system, for example a test entry. Its attendance sheet, if any, is kept. This cannot be undone from the app; to remove many at once use <a href="{{ url_for('schedule_clear') }}">Clear schedules</a>.</p>
+      <form method="post" action="{{ url_for('schedule_delete', activity_id=a.id) }}" data-confirm="Permanently delete {{ a.title }}? This cannot be undone from the app.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn--danger btn--sm" type="submit">Delete permanently</button>
+      </form>
+    </section>
+  {% endif %}
+{% endblock %}

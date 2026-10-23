@@ -1,0 +1,53 @@
+{#
+  _schedule_macros.html - SMALL PIECES SHARED BY THE SCHEDULE PAGES
+  [CATEGORY BADGE] the coloured label    [ACTIVITY ROW] one activity in a list
+  Colours of each category: static/css/style.css, search [SCHEDULE].
+#}
+
+{# [CATEGORY BADGE] #}
+{% macro cat_badge(a) %}<span class="cat cat--{{ a.category }}">{{ a.category_label }}</span>{% endmacro %}
+
+{# [ACTIVITY ROW] One activity: date tile, title, when and where, category, who it is for.
+   manage = True adds an Edit link. Used by the list view, the phone agenda and the Upcoming panel. #}
+{% macro activity_row(a, manage=False, compact=False) %}
+  <li class="sch-row{% if a.cancelled %} sch-row--cancelled{% endif %}">
+    <div class="event__date" aria-hidden="true">
+      <span class="event__month">{{ a.month }}</span>
+      <span class="event__day">{{ a.day }}</span>
+    </div>
+    <div class="sch-row__body">
+      <p class="event__title"><a href="{{ url_for('schedule_view', activity_id=a.id) }}">{{ a.title }}</a></p>
+      <p class="event__meta">
+        <span>{{ a.date_label }}</span>
+        {% if a.time %}<span>{{ a.time }}</span>{% endif %}
+        {% if a.venue %}<span>{{ a.venue }}</span>{% endif %}
+      </p>
+      <p class="sch-row__tags">
+        {{ cat_badge(a) }}
+        {% if not compact %}<span class="sch-aud">For: {{ a.audience }}</span>{% endif %}
+        {% if a.announcement_id %}<span class="badge badge--linked">From announcement</span>{% endif %}
+        {% if a.cancelled %}<span class="badge badge--inactive">Cancelled</span>{% endif %}
+      </p>
+    </div>
+    {% if manage and not compact %}
+      <div class="sch-row__actions">
+        <a class="link-action" href="{{ url_for('schedule_view', activity_id=a.id) }}">View</a>
+        <a class="link-action" href="{{ url_for('schedule_edit', activity_id=a.id) }}">Edit</a>
+      </div>
+    {% endif %}
+  </li>
+{% endmacro %}
+{# [UPCOMING ROW] One line of the Upcoming panel: weekday tile, title, time and venue, colour dot. #}
+{% macro upcoming_row(a) %}
+  <li class="up-row">
+    <div class="up-row__date" aria-hidden="true">
+      <span class="up-row__wd">{{ a.weekday }}</span>
+      <span class="up-row__day">{{ a.day }}</span>
+    </div>
+    <div class="up-row__body">
+      <p class="up-row__title"><a href="{{ url_for('schedule_view', activity_id=a.id) }}">{{ a.title }}</a></p>
+      <p class="up-row__meta">{{ a.month|title }} {{ a.day }}{% if a.time %} &middot; {{ a.time }}{% endif %}{% if a.venue %} &middot; {{ a.venue }}{% endif %}</p>
+    </div>
+    <span class="cat cat--{{ a.category }} up-row__cat" title="{{ a.category_label }}">{{ a.category_label }}</span>
+  </li>
+{% endmacro %}

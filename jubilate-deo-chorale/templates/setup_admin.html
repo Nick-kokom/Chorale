@@ -1,0 +1,70 @@
+{#
+  =====================================================================
+  setup_admin.html - FIRST-TIME ADMINISTRATOR SETUP PAGE
+  =====================================================================
+  Shown ONLY until the first administrator account exists. After that,
+  this page is closed automatically and visitors go to the login page.
+
+  It uses the same burgundy box as the login page, but with no splash
+  screen, so the form is visible straight away.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [HEADING]          Title and explanation text
+    [FIELDS]           Name, email and password boxes
+    [PASSWORD LENGTH]  The minimum length message
+    [BUTTON]           The Create administrator button
+#}
+{% extends "base.html" %}
+
+{% block title %}Create administrator{% endblock %}
+{% block body_class %}page-setup{% endblock %}
+
+{% block auth_content %}
+  <section class="login-card login-card--setup" aria-label="Create administrator">
+
+    {{ flashes() }}
+
+    {# [HEADING] #}
+    <h2 class="login-card__title">Set up your choir</h2>
+    <p class="login-card__lead">Create the first administrator account. This page is only available until an account exists.</p>
+
+    {# data-match-form turns on the live "passwords do not match" check (static/js/app.js) #}
+    <form method="post" action="{{ url_for('setup_admin') }}" class="form" novalidate data-match-form>
+      {# Security token. Do not remove. #}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {# [FIELDS] Full name #}
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input id="full_name" name="full_name" type="text" autocomplete="name" value="{{ form.full_name }}" required autofocus>
+      </div>
+
+      {# [FIELDS] Email address #}
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="username" value="{{ form.email }}" required>
+      </div>
+
+      {# [FIELDS] Password.
+         [PASSWORD LENGTH] The minimum length is set by MIN_PASSWORD_LENGTH in app.py #}
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="field__group">
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="{{ min_length }}" required>
+          <button type="button" class="field__toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+        </div>
+        <p class="field__hint">At least {{ min_length }} characters.</p>
+      </div>
+
+      {# [FIELDS] Confirm password. The red message appears only if they differ. #}
+      <div class="field">
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+        <p class="field__hint field__hint--error" data-match-message hidden>The two passwords do not match.</p>
+      </div>
+
+      {# [BUTTON] #}
+      <button class="btn btn--gold btn--block" type="submit">Create administrator</button>
+    </form>
+  </section>
+{% endblock %}

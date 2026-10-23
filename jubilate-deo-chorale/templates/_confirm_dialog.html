@@ -1,0 +1,30 @@
+{#
+  =====================================================================
+  _confirm_dialog.html - A CONFIRMATION DIALOG FOR A DESTRUCTIVE ACTION
+  =====================================================================
+  Included with {% with %} from member_detail.html and member_form.html. Set these four things first:
+    dialog_id  a unique id, e.g. "delete-dialog"; the trash button points to it with data-dialog-open="..."
+    action     the URL the form posts to (the real delete / remove route in app.py)
+    title      the question, e.g. "Delete Jane Doe?"
+    text       one or two sentences saying what will and will not happen
+    button     the label of the red confirm button
+  The red button lives INSIDE the dialog, so nothing can be deleted until the dialog is opened and confirmed.
+  Without JavaScript the trash button simply does nothing, which is the safe way to fail.
+  The behaviour (open, Cancel, Esc, click outside) is in static/js/app.js (search [CONFIRM DIALOG]).
+  Look: static/css/style.css (search [CONFIRM DIALOG]).
+#}
+<dialog class="cdialog" id="{{ dialog_id }}" aria-labelledby="{{ dialog_id }}-title" aria-describedby="{{ dialog_id }}-text" data-confirm="{{ title }} {{ text }}">
+  <form method="post" action="{{ action }}" class="cdialog__form">
+    {# Security token. Do not remove. #}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <span class="cdialog__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+    </span>
+    <h2 id="{{ dialog_id }}-title" class="cdialog__title">{{ title }}</h2>
+    <p id="{{ dialog_id }}-text" class="cdialog__text">{{ text }}</p>
+    <div class="cdialog__actions">
+      <button type="button" class="btn btn--outline btn--sm" data-dialog-close>Cancel</button>
+      <button type="submit" class="btn btn--danger btn--sm">{{ button }}</button>
+    </div>
+  </form>
+</dialog>

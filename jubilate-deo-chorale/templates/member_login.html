@@ -1,0 +1,83 @@
+{#
+  =====================================================================
+  member_login.html - THE MEMBERS' SIGN-IN PAGE  (address: /member)
+  =====================================================================
+  Same idea as the administrator page: a first screen (logo, tagline, round
+  button), then a sign-in card. The card is light instead of burgundy.
+  Members sign in with the Member ID and password given by the administrator.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [SPLASH]      First screen (logo, tagline, round button)
+    [ICON SLOT]   Where your own music-note icon goes (same as the admin page)
+    [LOGIN CARD]  The sign-in card
+  Colours and sizes: static/css/style.css ([SPLASH]) and member.css ([MEMBER LOGIN]).
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>Member sign in | {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+</head>
+<body class="page-login page-member-login">
+  {% set has_messages = get_flashed_messages()|length > 0 %}
+  <div class="auth member-auth">
+    <main id="main" class="auth__stage">
+
+      {# [SPLASH] #}
+      <div class="splash" data-splash {% if has_messages %}hidden{% endif %}>
+        <div class="splash__logo">
+          {% if has_logo %}<img class="logo logo--xl" src="{{ url_for('static', filename='images/logo.png') }}" alt="{{ app_name }} logo">
+          {% else %}<div class="logo logo--xl logo--placeholder" role="img" aria-label="Choir logo placeholder"><span>JDC</span></div>{% endif %}
+        </div>
+        <p class="splash__tagline">{{ tagline }}</p>
+        {# [ICON SLOT] To use your own icon, see the instructions in login.html (same steps, same file name) #}
+        <button class="note-btn" type="button" data-open-login aria-label="Continue to sign in">
+          <span class="note-btn__fallback" aria-hidden="true">&#9834;</span>
+        </button>
+      </div>
+
+      {# [LOGIN CARD] #}
+      <section class="login-card login-card--light" data-login-card {% if not has_messages %}hidden{% endif %} aria-label="Member sign in">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flashes" aria-live="polite">
+              {% for category, message in messages %}
+                <div class="flash flash--{{ category }}" role="status"><span>{{ message }}</span>
+                  <button type="button" class="flash__close" data-dismiss aria-label="Dismiss message">&times;</button></div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <h2 class="login-card__title">Welcome</h2>
+        <p class="login-card__lead">Sign in with the Member ID and password given to you by your choir administrator.</p>
+
+        <form method="post" action="{{ url_for('member_login') }}" class="form" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field">
+            <label for="identifier">Member ID</label>
+            <input id="identifier" name="identifier" type="text" value="{{ identifier }}" placeholder="JDC-0001"
+                   autocomplete="username" required autocapitalize="characters" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="field__group">
+              <input id="password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="field__toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <button class="btn btn--primary btn--block" type="submit">Sign in</button>
+        </form>
+        <p class="login-card__alt">Forgot your password? Ask your choir administrator to generate a new one.</p>
+        <p class="login-card__alt"><a href="{{ url_for('login') }}">Administrator? Sign in here</a></p>
+      </section>
+    </main>
+    <p class="auth__legal">&copy; {{ current_year }} {{ app_name }}</p>
+  </div>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

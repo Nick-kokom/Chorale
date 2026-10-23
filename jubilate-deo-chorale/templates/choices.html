@@ -1,0 +1,99 @@
+{#
+  =====================================================================
+  choices.html - VOICE SECTIONS AND CHOIR POSITIONS (add, rename, retire)
+  =====================================================================
+  Administrators only. The route is members_choices in app.py (search [MANAGE CHOICES]).
+  Retired choices are hidden from the forms, but members who already have them keep them.
+  Membership statuses are not here: they are fixed in the code.
+#}
+{% extends "base.html" %}
+
+{% block title %}Voice sections &amp; positions{% endblock %}
+{% block body_class %}page-members page-choices{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+
+  {% macro choice_panel(kind, title, noun, rows) %}
+    <section class="panel panel--wide" aria-labelledby="{{ kind }}-title">
+      <header class="panel__head"><h2 id="{{ kind }}-title">{{ title }}</h2><span class="panel__meta">{{ rows|length }}</span></header>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Members</th>
+              <th scope="col">Shown in forms</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td data-label="Name" class="td--primary">
+                  {% if row.locked %}
+                    <strong>{{ row.name }}</strong> <small class="muted">Name is fixed: it controls what this position can do in the member area.</small>
+                  {% else %}
+                  <form method="post" class="choice-rename" action="{{ url_for('members_choices') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="kind" value="{{ kind }}">
+                    <input type="hidden" name="action" value="rename">
+                    <input type="hidden" name="id" value="{{ row.id }}">
+                    <input type="text" name="name" value="{{ row.name }}" maxlength="{{ name_max }}" required aria-label="Name of {{ row.name }}">
+                    <button class="btn btn--outline btn--sm" type="submit">Rename</button>
+                  </form>
+                  {% endif %}
+                </td>
+                <td data-label="Members">{{ row.people }}</td>
+                <td data-label="Shown in forms">{% if row.is_active %}<span class="badge badge--active">Yes</span>{% else %}<span class="badge badge--inactive">Retired</span>{% endif %}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <form method="post" class="inline" action="{{ url_for('members_choices') }}"
+                          {% if row.is_active %}data-confirm="Retire {{ row.name }}? It will be hidden from the forms. Members who have it keep it."{% endif %}>
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="kind" value="{{ kind }}">
+                      <input type="hidden" name="id" value="{{ row.id }}">
+                      <input type="hidden" name="action" value="{{ 'retire' if row.is_active else 'restore' }}">
+                      <button class="link-action" type="submit">{{ 'Retire' if row.is_active else 'Bring back' }}</button>
+                    </form>
+                    {% if not row.people %}
+                      <form method="post" class="inline" action="{{ url_for('members_choices') }}"
+                            data-confirm="Remove {{ row.name }} for good? Nobody uses it.">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="kind" value="{{ kind }}">
+                        <input type="hidden" name="id" value="{{ row.id }}">
+                        <input type="hidden" name="action" value="remove">
+                        <button class="link-action link-action--danger" type="submit">Remove</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <form method="post" class="choice-add" action="{{ url_for('members_choices') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="kind" value="{{ kind }}">
+        <input type="hidden" name="action" value="add">
+        <div class="field">
+          <label for="new-{{ kind }}">Add a new {{ noun }}</label>
+          <input id="new-{{ kind }}" name="name" type="text" maxlength="{{ name_max }}" required autocomplete="off">
+        </div>
+        <button class="btn btn--primary" type="submit">Add</button>
+      </form>
+    </section>
+  {% endmacro %}
+
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list') }}">&larr; Members</a></p>
+    <h1>Voice sections &amp; positions</h1>
+    <p class="page-head__lead">Add, rename or retire the choices used on the member form. A retired choice is hidden from the forms, but members who already have it keep it.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  {{ choice_panel('voice', 'Voice sections', 'voice section', voices) }}
+  {{ choice_panel('position', 'Choir positions', 'choir position', positions) }}
+{% endblock %}

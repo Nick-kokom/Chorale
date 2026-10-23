@@ -1,0 +1,244 @@
+{# member_home.html - MEMBER DASHBOARD. Data comes from render_member_dashboard() in app.py. #}
+{% extends "member_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_home %}is-active{% endblock %}
+
+{# Greeting: shown in the sticky top bar (see member_base.html), so it stays readable while the page scrolls #}
+{% block topbar_title %}
+  <div class="mtop__greeting">
+    <p class="mtop__date">{{ today }}</p>
+    <h1>Peace be with you, {{ me.first_name }}</h1>
+  </div>
+{% endblock %}
+
+{% block content %}
+
+  {# Quick actions, in this order: My tasks, Music library, Evaluation, Organizational structure. Locked ones say "Soon". #}
+  <ul class="qa">
+    <li><a class="qa__item" href="#tasks">{{ icon('check') }}<span>My tasks</span>{% if open_tasks %}<small>{{ open_tasks }} open</small>{% endif %}</a></li>
+    {% if member_can('panel.music') %}
+      <li><a class="qa__item" href="{{ url_for('music_library') }}">{{ icon('music') }}<span>Library</span></a></li>
+    {% else %}
+      <li><span class="qa__item qa__item--locked" aria-disabled="true">{{ icon('music') }}<span>Music library</span><small>Soon</small></span></li>
+    {% endif %}
+    <li><span class="qa__item qa__item--locked" aria-disabled="true">{{ icon('star') }}<span>Evaluation</span><small>Soon</small></span></li>
+    <li><span class="qa__item qa__item--locked" aria-disabled="true">{{ icon('users') }}<span>Organizational structure</span><small>Soon</small></span></li>
+    {% if member_can('tasks.manage') %}
+      <li><a class="qa__item qa__item--staff" href="{{ url_for('member_tasks_manage') }}">{{ icon('check') }}<span>Manage tasks</span></a></li>
+    {% endif %}
+    {% if member_can('finance.post') %}
+      <li><a class="qa__item qa__item--staff" href="{{ url_for('member_treasurer_manage') }}">{{ icon('wallet') }}<span>Post treasurer's report</span></a></li>
+    {% endif %}
+    {% if member_can('attendance.manage') %}
+      <li><a class="qa__item qa__item--staff" href="{{ url_for('member_attendance_manage') }}">{{ icon('users') }}<span>Take attendance</span></a></li>
+    {% endif %}
+  </ul>
+
+  {# Two columns of about equal height. Left: announcements, calendar. Right: 2x2 cards, recent activity. #}
+  <div class="mdash">
+
+    {# LEFT COLUMN #}
+    <div class="mdash__col mdash__col--left">
+
+    <section class="panel mdash__ann" id="announcements" aria-labelledby="ann-title">
+      <header class="panel__head">
+        <h2 id="ann-title">Announcements</h2>
+        <nav class="tabs" aria-label="Announcement type">
+          <a class="tabs__item {% if tab == 'all' %}is-active{% endif %}" href="{{ url_for('member_home') }}#announcements">All</a>
+          <a class="tabs__item {% if tab == 'general' %}is-active{% endif %}" href="{{ url_for('member_home', tab='general') }}#announcements">General</a>
+          <a class="tabs__item {% if tab == 'voice' %}is-active{% endif %}" href="{{ url_for('member_home', tab='voice') }}#announcements">{{ me.voice_name }}</a>
+        </nav>
+      </header>
+
+      {# Posting box: only for positions allowed to post (President, Choir Director, Secretary) #}
+      {% if member_can('announcements.post') %}
+        <details class="compose" {% if compose.open %}open{% endif %}>
+          <summary class="btn btn--outline btn--sm">Post an announcement</summary>
+          <form method="post" action="{{ url_for('member_announcement_post') }}" class="form" novalidate data-validate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field{% if compose.errors.title %} field--error{% endif %}">
+              <label for="a_title">Title</label>
+              <input id="a_title" name="title" type="text" maxlength="120" required value="{{ compose['values'].title or '' }}">
+              {% if compose.errors.title %}<p class="field__error">{{ compose.errors.title }}</p>{% endif %}
+            </div>
+            <div class="field{% if compose.errors.audience %} field--error{% endif %}">
+              <label for="a_audience">Who should see it?</label>
+              <select id="a_audience" name="audience">
+                <option value="all">General (everyone)</option>
+                {% for v in voices %}<option value="{{ v.id }}" {% if compose['values'].audience == v.id|string %}selected{% endif %}>{{ v.name }} only</option>{% endfor %}
+              </select>
+              {% if compose.errors.audience %}<p class="field__error">{{ compose.errors.audience }}</p>{% endif %}
+            </div>
+            <div class="field{% if compose.errors.body %} field--error{% endif %}">
+              <label for="a_body">Announcement</label>
+              <textarea id="a_body" name="body" rows="4" maxlength="2000" required>{{ compose['values'].body or '' }}</textarea>
+              {% if compose.errors.body %}<p class="field__error">{{ compose.errors.body }}</p>{% endif %}
+            </div>
+            <div class="form-actions"><button class="btn btn--primary btn--sm" type="submit">Submit</button></div>
+          </form>
+        </details>
+        {% if queued_own %}<p class="muted">{{ queued_own }} of your announcement{{ '' if queued_own == 1 else 's' }} waiting in the queue.</p>{% endif %}
+      {% endif %}
+
+      {# The feed #}
+      {% if not member_can('panel.announcements') %}
+        <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">Announcements are not available</p><p class="empty__text">Your access to announcements was turned off. Please contact your choir administrator.</p></div>
+      {% elif feed %}
+        <ul class="feed">
+          {% for a in feed %}
+            <li class="feed__item">
+              <div class="feed__top">
+                <h3 class="feed__title">{{ a.title }}</h3>
+                <span class="badge {{ 'badge--temporarily_inactive' if a.audience_name else 'badge--active' }}">{{ a.audience_name or 'General' }}</span>
+              </div>
+              <p class="feed__body">{{ a.body }}</p>
+              <p class="feed__meta">{{ a.author_name }} &middot; {{ a.published_at|pretty_stamp }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No announcements yet</p><p class="empty__text">News from your officers will appear here.</p></div>
+      {% endif %}
+    </section>
+
+    {# Calendar: rehearsal/Mass days and the days your own tasks are due #}
+    <section class="panel mdash__cal" id="calendar" aria-labelledby="cal-title">
+      <header class="panel__head">
+        <h2 id="cal-title">Calendar</h2>
+        <span class="cal__nav">
+          <a href="{{ url_for('member_home', month=cal.prev, tab=tab) }}#calendar" aria-label="Previous month">&lsaquo;</a>
+          <strong>{{ cal.title }}</strong>
+          <a href="{{ url_for('member_home', month=cal.next, tab=tab) }}#calendar" aria-label="Next month">&rsaquo;</a>
+        </span>
+      </header>
+      <table class="cal">
+        <thead><tr>{% for d in ['Su','Mo','Tu','We','Th','Fr','Sa'] %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for week in cal.weeks %}
+            <tr>
+              {% for c in week %}
+                <td class="cal__day{% if c.other %} cal__day--other{% endif %}{% if c.today %} cal__day--today{% endif %}"
+                    {% if c.note and not c.other %}title="{{ c.note }}"{% endif %}>
+                  {{ c.day }}
+                  {% if not c.other %}
+                    <span class="cal__dots">{% if c.session %}<i class="dot dot--session"></i>{% endif %}{% if c.task %}<i class="dot dot--task"></i>{% endif %}</span>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="cal__key"><i class="dot dot--session"></i> Activity &nbsp; <i class="dot dot--task"></i> Task due</p>
+      {% if member_can('panel.schedule') %}<p class="cal__key"><a href="{{ url_for('schedule_list') }}">Open the full schedule &rarr;</a></p>{% endif %}
+      {% if not cal.is_current %}<p class="cal__key"><a href="{{ url_for('member_home', tab=tab) }}#calendar">Back to this month</a></p>{% endif %}
+    </section>
+
+    </div>{# end left column #}
+
+    {# RIGHT COLUMN #}
+    <div class="mdash__col mdash__col--right">
+
+    {# 2x2 cards: attendance, tasks, treasurer's report, performance rating #}
+    <div class="mdash__cards">
+
+      {# Attendance tracker: only this member's own records #}
+      <section class="panel" aria-labelledby="att-title">
+        <header class="panel__head">
+          <h2 id="att-title">My attendance</h2>
+          {% if attendance.rate is not none %}<span class="panel__meta">{{ attendance.rate }}% attended</span>{% endif %}
+        </header>
+        {% if attendance.rows %}
+          <ul class="att-counts">
+            {% for code, label in statuses.items() %}
+              <li><strong>{{ attendance.counts[code] }}</strong><span>{{ label }}</span></li>
+            {% endfor %}
+          </ul>
+          <ul class="att-list">
+            {% for r in attendance.rows %}
+              <li><span>{{ r.session_date|pretty_date }} <small class="muted">{{ r.title }}</small></span>
+                <span class="att att--{{ r.status }}">{{ statuses[r.status] }}</span></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">Nothing recorded yet</p><p class="empty__text">Your attendance will show here after your secretary records it.</p></div>
+        {% endif %}
+      </section>
+
+      {# Assigned tasks. A check mark appears once the secretary marks it done. #}
+      <section class="panel" id="tasks" aria-labelledby="task-title">
+        <header class="panel__head">
+          <h2 id="task-title">My tasks</h2>
+          {% if open_tasks %}<span class="panel__meta">{{ open_tasks }} open</span>{% endif %}
+        </header>
+        {% if tasks %}
+          <ul class="tasks">
+            {% for t in tasks %}
+              <li class="task {% if t.done %}task--done{% endif %}">
+                <span class="task__check" aria-hidden="true">{% if t.done %}{{ icon('check') }}{% endif %}</span>
+                <div>
+                  <p class="task__title">{{ t.title }}{% if t.done %}<span class="sr-only"> (completed)</span>{% endif %}</p>
+                  {% if t.details %}<p class="task__details">{{ t.details }}</p>{% endif %}
+                  <p class="task__due {% if t.overdue %}task__due--late{% endif %}">Target: {{ t.due_date|pretty_date }}{% if t.overdue %} &middot; Overdue{% endif %}</p>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No tasks assigned</p><p class="empty__text">Tasks from your secretary will appear here.</p></div>
+        {% endif %}
+      </section>
+
+      {# Treasurer's report: the newest one big, earlier ones listed below. Posted from "Post treasurer's report". #}
+      <section class="panel" id="treasurer" aria-labelledby="fin-title">
+        <header class="panel__head">
+          <h2 id="fin-title">Treasurer's report</h2>
+          {% if treasurer %}<span class="panel__meta">As of {{ treasurer[0].report_date|pretty_date }}</span>{% endif %}
+        </header>
+        {% if not member_can('panel.reports') %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">Reports are not available</p><p class="empty__text">Your access to reports was turned off. Please contact your choir administrator.</p></div>
+        {% elif treasurer %}
+          {% set latest = treasurer[0] %}
+          <p class="fin__balance"><span>Current balance</span><strong>{{ latest.balance|peso }}</strong></p>
+          <ul class="fin__flow">
+            <li><span>Money in</span><strong class="fin--in">{{ latest.money_in|peso }}</strong></li>
+            <li><span>Money out</span><strong class="fin--out">{{ latest.money_out|peso }}</strong></li>
+          </ul>
+          {% if latest.notes %}<p class="fin__notes">{{ latest.notes }}</p>{% endif %}
+          <p class="fin__by">Posted by {{ latest.posted_name }}</p>
+          {% if treasurer|length > 1 %}
+            <h3 class="fin__sub">Earlier reports</h3>
+            <ul class="fin__hist">
+              {% for r in treasurer[1:] %}<li><span>{{ r.report_date|pretty_date }}</span><strong>{{ r.balance|peso }}</strong></li>{% endfor %}
+            </ul>
+          {% endif %}
+        {% else %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No report yet</p><p class="empty__text">Your treasurer's report will appear here once it is posted.</p></div>
+        {% endif %}
+      </section>
+
+      {# Performance rating: locked until the evaluation feature is built #}
+      <section class="panel panel--locked" aria-labelledby="eval-title">
+        <header class="panel__head"><h2 id="eval-title">Performance rating</h2>{{ icon('lock') }}</header>
+        <p class="muted">Your overall rating from other members will appear here once an evaluation is published.</p>
+      </section>
+    </div>
+
+    {# Recent activity, under the cards #}
+    <section class="panel mdash__recent" id="recent" aria-labelledby="recent-title">
+      <header class="panel__head"><h2 id="recent-title">Recent activity</h2></header>
+      {% if recent %}
+        <ul class="recent">
+          {% for a in recent %}
+            <li class="recent__item"><span class="recent__text">{{ a.text }}</span><span class="recent__when">{{ a.when }}</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">Nothing yet</p><p class="empty__text">Announcements, tasks and attendance that concern you will show up here.</p></div>
+      {% endif %}
+    </section>
+
+    </div>{# end right column #}
+
+  </div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{#
+  =====================================================================
+  _org_structure.html - THE ORGANIZATIONAL STRUCTURE PANEL (Members page)
+  =====================================================================
+  Included by members.html (administrator) AND member_members.html (member area). The data (`org`) is built from
+  the Members records by build_org_structure() in app.py, so nothing here is typed in by hand. Every person
+  carries photo_url / profile_url set by that function (admin routes or member-area routes, depending on who is
+  looking); a missing profile_url means "no link", a missing photo_url means "show initials". Read-only for everyone.
+  The shape of the tree (which boxes exist) is set by ORG_* near the top of app.py.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [ORG HEADER]   The burgundy bar with the title and the chevron (always visible)
+    [ORG TOP]      Parish Priest, Choir Director and President (always visible)
+    [ORG LEVELS]   Executive officers, appointed officers, other positions
+    [ORG MEMBERS]  Ordinary members grouped by voice section
+  Styles: search "ORGANIZATIONAL STRUCTURE" in style.css. Collapse/expand: app.js.
+#}
+
+{# One person: round photo (or the default silhouette) and name. Opens that member's page.
+   [DEFAULT AVATAR] templates/_avatar.html draws it; a missing or broken photo shows the silhouette, never a broken image. #}
+{% from "_avatar.html" import person_avatar %}
+{% macro org_avatar(person, size='') %}
+  {{ person_avatar(person.photo_url, person.full_name, size, 'org-avatar', True) }}
+{% endmacro %}
+
+{# The neutral picture shown when nobody holds a position #}
+{% macro org_empty_avatar(size='') %}
+  <span class="org-avatar org-avatar--empty {{ size }}" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="9" r="4.2"/><path d="M3.5 22c0-4.7 3.8-7.6 8.5-7.6s8.5 2.9 8.5 7.6z"/></svg>
+  </span>
+{% endmacro %}
+
+{# One box of the tree. One person: picture beside the title. Several people: title on top, people side by side. #}
+{% macro org_card(slot, extra='') %}
+  {% set people = slot.people %}
+  <div class="org-card {{ extra }}{% if not people %} org-card--vacant{% elif people|length > 1 %} org-card--multi{% endif %}" data-org-box="{{ slot.key }}">
+    {% if people|length > 1 %}
+      <p class="org-card__title">{{ slot.label }} <span class="org-card__count">{{ people|length }}</span></p>
+      <ul class="org-people">
+        {% for person in people %}
+          {% set tag = 'a' if person.profile_url else 'span' %}
+          <li><{{ tag }} class="org-person"{% if person.profile_url %} href="{{ person.profile_url }}"{% endif %} title="{{ person.full_name }}">{{ org_avatar(person, 'org-avatar--sm') }}<span class="org-person__name">{{ person.name }}</span></{{ tag }}></li>
+        {% endfor %}
+      </ul>
+    {% elif people %}
+      {% set person = people[0] %}
+      {% set tag = 'a' if person.profile_url else 'div' %}
+      <{{ tag }} class="org-person org-person--lead"{% if person.profile_url %} href="{{ person.profile_url }}"{% endif %} title="{{ person.full_name }}">
+        {{ org_avatar(person) }}
+        <span class="org-card__text">
+          <span class="org-card__title">{{ slot.label }}</span>
+          <span class="org-person__name">{{ person.name }}</span>
+        </span>
+      </{{ tag }}>
+    {% else %}
+      <div class="org-person org-person--lead">
+        {{ org_empty_avatar() }}
+        <span class="org-card__text">
+          <span class="org-card__title">{{ slot.label }}</span>
+          <span class="org-vacant">Vacant</span>
+        </span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+<section class="panel org" data-org aria-labelledby="org-title">
+
+  {# [ORG HEADER] The whole bar is the button. The header stays visible when the tree is collapsed. #}
+  <h2 class="org__head" id="org-title">
+    <button class="org__bar" type="button" data-org-toggle aria-expanded="true" aria-controls="org-rest">
+      <svg class="org__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg>
+      <span class="org__title">Organizational structure</span>
+      <span class="org__count">{{ org.choir_total }} choir member{{ '' if org.choir_total == 1 else 's' }}</span>
+      <svg class="org__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+    </button>
+  </h2>
+
+  <div class="org__body">
+
+    {# [ORG TOP] Parish Priest (left) and Choir Director (right) on one row, President centred below them #}
+    <div class="org__top">
+      <div class="org-toprow">
+        {{ org_card(org.top[0], 'org-card--top') }}
+        <span class="org-link" aria-hidden="true"></span>
+        {{ org_card(org.top[1], 'org-card--top') }}
+      </div>
+      <span class="org-stem" aria-hidden="true"></span>
+      <div class="org-president">{{ org_card(org.president) }}</div>
+    </div>
+
+    {# Everything below folds away when the panel is collapsed #}
+    <div class="org__rest" id="org-rest" data-org-rest>
+      <div class="org__rest-inner">
+
+        {# [ORG LEVELS] #}
+        <span class="org-stem" aria-hidden="true"></span>
+        <div class="org-level">
+          <p class="org-label"><span>Executive officers</span></p>
+          <div class="org-row">
+            {% for slot in org.executive %}{{ org_card(slot) }}{% endfor %}
+          </div>
+        </div>
+
+        <span class="org-stem" aria-hidden="true"></span>
+        <div class="org-level">
+          <p class="org-label"><span>Appointed officers</span></p>
+          <div class="org-row">
+            {% for slot in org.appointed %}{{ org_card(slot) }}{% endfor %}
+          </div>
+        </div>
+
+        {# People whose position has no box in the tree. Shown so nobody is hidden. #}
+        {% if org.others %}
+          <div class="org-level org-level--other">
+            <p class="org-label"><span>Other positions</span></p>
+            <div class="org-row">
+              {% for slot in org.others %}{{ org_card(slot) }}{% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# [ORG MEMBERS] Ordinary members, grouped by their voice section #}
+        <span class="org-stem" aria-hidden="true"></span>
+        <div class="org-level">
+          <p class="org-label"><span>Members <small>(grouped by voice section)</small></span></p>
+          {% if org.sections %}
+            <div class="org-voices">
+              {% for section in org.sections %}
+                <section class="org-voice" aria-label="{{ section.name }}">
+                  <h3 class="org-voice__name">{{ section.name }}</h3>
+                  {% if section.people %}
+                    <ul class="org-voice__list">
+                      {% for person in section.people %}
+                        {% set tag = 'a' if person.profile_url else 'span' %}
+                        <li><{{ tag }} class="org-mem"{% if person.profile_url %} href="{{ person.profile_url }}"{% endif %} title="{{ person.full_name }}">{{ org_avatar(person, 'org-avatar--md') }}<span class="org-mem__name">{{ person.name }}</span></{{ tag }}></li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <p class="org-voice__empty">No members yet</p>
+                  {% endif %}
+                  <p class="org-voice__count"><span>{{ section.people|length }} member{{ '' if section.people|length == 1 else 's' }}</span></p>
+                </section>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="org-voice__empty">No voice sections have been set up yet.</p>
+          {% endif %}
+        </div>
+
+        <p class="org-note">Every position stays visible, even when vacant. Names and photos come from the member records (active members only). The Parish Priest is not counted as a choir member.</p>
+      </div>
+    </div>
+  </div>
+</section>

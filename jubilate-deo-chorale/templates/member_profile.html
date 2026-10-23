@@ -1,0 +1,80 @@
+{#
+  member_profile.html - "ABOUT YOU": THE PERSONAL INFORMATION FORM
+  Shown automatically after a member's first sign-in. Nothing else in the member area opens until it is
+  saved. Members can open it again from the profile menu (top right) to update their answers.
+  The checks are in read_profile_form() in app.py (the browser checks in app.js are only for quick feedback).
+  Email and phone are also copied to the member's record, so administrators see them on the member's page.
+#}
+{% extends "member_base.html" %}
+{% block title %}{{ 'Tell us about you' if first_time else 'My information' }}{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date">{{ 'Welcome to the choir' if first_time else 'Your account' }}</p>
+    <h1>{{ 'Tell us about you' if first_time else 'My information' }}</h1>
+    <p class="page-head__lead">{% if first_time %}Please fill in this form once. You can open your dashboard right after you save it.{% else %}Keep your details up to date. Other members can see your name, nickname, voice section, position, contact details and Facebook link, but never the reason you gave for joining.{% endif %}</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide">
+    <form method="post" action="{{ url_for('member_profile') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid">
+
+        <div class="field{% if errors.full_name %} field--error{% endif %}">
+          <label for="full_name">Full name <span class="req">*</span></label>
+          <input id="full_name" name="full_name" type="text" maxlength="120" required autocomplete="name" data-letters value="{{ values.full_name }}">
+          {% if errors.full_name %}<p class="field__error">{{ errors.full_name }}</p>{% endif %}
+        </div>
+
+        <div class="field{% if errors.nickname %} field--error{% endif %}">
+          <label for="nickname">Nickname <span class="req">*</span></label>
+          <input id="nickname" name="nickname" type="text" maxlength="40" required autocomplete="nickname" data-letters value="{{ values.nickname }}">
+          {% if errors.nickname %}<p class="field__error">{{ errors.nickname }}</p>{% endif %}
+        </div>
+
+        <div class="field{% if errors.birthday %} field--error{% endif %}">
+          <label for="birthday">Birthday <span class="req">*</span></label>
+          <input id="birthday" name="birthday" type="date" min="1900-01-01" max="{{ today }}" required autocomplete="bday" data-birthday
+                 data-required-message="Enter your birthday." data-max-message="Birthday can't be in the future." value="{{ values.birthday }}">
+          {% if errors.birthday %}<p class="field__error">{{ errors.birthday }}</p>{% endif %}
+        </div>
+
+        <div class="field">
+          <span class="field__label">Age</span>
+          <p class="readonly" data-age-output>{% if age is not none %}{{ age }} years old{% else %}Worked out from your birthday{% endif %}</p>
+        </div>
+
+        <div class="field{% if errors.email %} field--error{% endif %}">
+          <label for="email">Email address <span class="req">*</span></label>
+          <input id="email" name="email" type="email" maxlength="254" required autocomplete="email" value="{{ values.email }}">
+          {% if errors.email %}<p class="field__error">{{ errors.email }}</p>{% endif %}
+        </div>
+
+        <div class="field{% if errors.phone %} field--error{% endif %}">
+          <label for="phone">Phone number <span class="req">*</span></label>
+          <input id="phone" name="phone" type="tel" maxlength="30" required autocomplete="tel" data-phone placeholder="0917 123 4567" value="{{ values.phone }}">
+          {% if errors.phone %}<p class="field__error">{{ errors.phone }}</p>{% endif %}
+        </div>
+
+        <div class="field field--full{% if errors.facebook_link %} field--error{% endif %}">
+          <label for="facebook_link">Facebook link <span class="optional">(optional)</span></label>
+          <input id="facebook_link" name="facebook_link" type="url" maxlength="300" placeholder="https://facebook.com/yourname" value="{{ values.facebook_link }}">
+          {% if errors.facebook_link %}<p class="field__error">{{ errors.facebook_link }}</p>{% endif %}
+        </div>
+
+        <div class="field field--full{% if errors.reason %} field--error{% endif %}">
+          <label for="reason">Why do you want to join the choir? <span class="req">*</span></label>
+          <textarea id="reason" name="reason" rows="5" maxlength="1000" required>{{ values.reason }}</textarea>
+          <p class="field__hint">Only choir administrators can read this.</p>
+          {% if errors.reason %}<p class="field__error">{{ errors.reason }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        {% if not first_time %}<a class="btn btn--outline" href="{{ url_for('member_home') }}">Cancel</a>{% endif %}
+        <button class="btn btn--primary" type="submit">{{ 'Save and continue' if first_time else 'Save changes' }}</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

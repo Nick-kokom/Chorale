@@ -1,0 +1,138 @@
+{#
+  =====================================================================
+  members_archive.html - THE ARCHIVE (deleted members)
+  =====================================================================
+  Members you delete are moved here. Nothing is erased until you choose
+  "Delete permanently" on a member's archive page.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [HEADER]      Title and description
+    [SEARCH]      Search box
+    [TABLE]       Archived members (becomes cards on phones)
+    [PAGINATION]  Page buttons
+    [EMPTY STATE] Message when the archive is empty
+#}
+{% extends "base.html" %}
+
+{% block title %}Archive{% endblock %}
+{% block body_class %}page-members page-archive{% endblock %}
+{% block nav_archive %}is-active{% endblock %}
+
+{% block content %}
+
+  {# [HEADER] #}
+  <header class="page-head page-head--split">
+    <div>
+      <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list') }}">&larr; Members</a></p>
+      <h1>Archive</h1>
+      <p class="page-head__lead">Deleted members. Their details, history and login are kept here. They have no access, and you can restore them or delete them permanently.</p>
+      <span class="rule rule--dark" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  {# [SEARCH] #}
+  <section class="panel panel--wide" aria-label="Search the archive">
+    <form class="toolbar toolbar--archive" method="get" action="{{ url_for('members_archive') }}" role="search">
+      <div class="field toolbar__search">
+        <label for="q">Search the archive</label>
+        <input id="q" name="q" type="search" value="{{ q }}" maxlength="80" autocomplete="off" placeholder="Name, member ID, email or number">
+      </div>
+      <div class="toolbar__actions">
+        <button class="btn btn--primary btn--sm" type="submit">Search</button>
+        {% if q %}<a class="btn btn--outline btn--sm" href="{{ url_for('members_archive') }}">Clear</a>{% endif %}
+      </div>
+    </form>
+  </section>
+
+  {# [TABLE] #}
+  <section class="panel panel--wide" aria-labelledby="archive-title">
+    <header class="panel__head">
+      <h2 id="archive-title">Deleted members</h2>
+      <span class="panel__meta">{{ found }} member{{ '' if found == 1 else 's' }}{% if q %} found{% endif %}</span>
+    </header>
+
+    {% if members %}
+      <div class="table-wrap">
+        <table class="table table--roster">
+          <thead>
+            <tr>
+              <th scope="col">Member ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Voice section</th>
+              <th scope="col">Date joined</th>
+              <th scope="col">Added</th>
+              <th scope="col">Deleted</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+              <tr>
+                <td data-label="Member ID"><span class="mono">{{ m.member_code }}</span></td>
+                <td data-label="Name" class="td--primary">
+                  <div class="table__name">
+                    <span class="avatar" aria-hidden="true">{% if m.has_photo %}<img src="{{ url_for('member_photo', member_id=m.id) }}" alt="" loading="lazy">{% else %}{{ m.initials }}{% endif %}</span>
+                    <a href="{{ url_for('member_archive_detail', member_id=m.id) }}">{{ m.display_name }}</a>
+                  </div>
+                </td>
+                <td data-label="Voice section">{{ m.voice_name }}</td>
+                <td data-label="Date joined">{{ m.date_joined|pretty_date }}</td>
+                <td data-label="Added">{{ m.created_at|pretty_stamp }}</td>
+                <td data-label="Deleted">{{ m.deleted_at|pretty_stamp }}{% if m.deleted_by_name %}<br><span class="muted">by {{ m.deleted_by_name }}</span>{% endif %}</td>
+                <td data-label="Actions">
+                  <div class="table__actions">
+                    <a class="link-action" href="{{ url_for('member_archive_detail', member_id=m.id) }}">View</a>
+                    {# Restore: a POST form with a security token #}
+                    <form method="post" class="inline" action="{{ url_for('member_restore_archived', member_id=m.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="link-action" type="submit">Restore</button>
+                    </form>
+                    {# Permanent delete needs a typed confirmation, which lives on the member's archive page #}
+                    {% if can('members.purge') %}
+                      <a class="link-action link-action--danger" href="{{ url_for('member_archive_detail', member_id=m.id) }}#purge">Delete permanently</a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {# [PAGINATION] #}
+      <nav class="pagination" aria-label="Pages">
+        <p class="pagination__info">Showing {{ first_item }}&ndash;{{ last_item }} of {{ found }}</p>
+        {% if pages > 1 %}
+          <ul class="pagination__list">
+            <li>{% if prev_url %}<a class="page-link" href="{{ prev_url }}" rel="prev">Previous</a>{% else %}<span class="page-link page-link--disabled">Previous</span>{% endif %}</li>
+            {% for item in pager %}
+              {% if item.gap %}
+                <li><span class="page-link page-link--gap" aria-hidden="true">&hellip;</span></li>
+              {% else %}
+                <li><a class="page-link{% if item.current %} page-link--current{% endif %}" href="{{ item.url }}" {% if item.current %}aria-current="page"{% endif %}>{{ item.n }}</a></li>
+              {% endif %}
+            {% endfor %}
+            <li>{% if next_url %}<a class="page-link" href="{{ next_url }}" rel="next">Next</a>{% else %}<span class="page-link page-link--disabled">Next</span>{% endif %}</li>
+          </ul>
+        {% endif %}
+      </nav>
+
+    {% elif total_archived == 0 %}
+      {# [EMPTY STATE] nothing has been deleted #}
+      <div class="empty">
+        <span class="empty__mark" aria-hidden="true"></span>
+        <p class="empty__title">The archive is empty</p>
+        <p class="empty__text">When you delete a member, they are moved here instead of being erased, so you can still see their details and history.</p>
+      </div>
+    {% else %}
+      {# [EMPTY STATE] archive has members, but none match the search #}
+      <div class="empty">
+        <span class="empty__mark" aria-hidden="true"></span>
+        <p class="empty__title">No archived members match your search</p>
+        <p class="empty__text">Try a different name, or clear the search to see everyone in the archive.</p>
+        <p class="empty__action"><a class="btn btn--outline btn--sm" href="{{ url_for('members_archive') }}">Clear search</a></p>
+      </div>
+    {% endif %}
+  </section>
+
+{% endblock %}

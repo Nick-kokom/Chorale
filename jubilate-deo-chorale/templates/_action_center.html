@@ -1,0 +1,73 @@
+{#
+  =====================================================================
+  _action_center.html - THE ACTION CENTER (right-hand sidebar)
+  =====================================================================
+  Included by base.html for administrators only (permission "members.access").
+  It is opened from the "Action Center" item in the left side menu (any element with data-ac-open).
+  The switches are drawn by static/js/action_center.js from the data the server sends
+  (action_center_member in app.py), so the list of permissions lives in ONE place: app.py
+  (PANEL_PERMISSIONS, ACTION_PERMISSIONS, VOICE_FILE_PERMISSIONS).
+  Styling: static/css/action_center.css   ([AC HANDLE] [AC DRAWER] [AC SWITCH])
+  The browser only displays and sends choices. The server decides everything.
+#}
+<div class="ac-scrim" data-ac-scrim hidden></div>
+
+<aside class="ac" id="action-center" role="dialog" aria-modal="true" aria-labelledby="ac-title" tabindex="-1"
+       data-search-url="{{ url_for('action_center_search') }}"
+       data-member-url="{{ url_for('action_center_member', member_id=0) }}">
+  <input type="hidden" data-ac-csrf value="{{ csrf_token() }}">
+
+  <header class="ac__head">
+    <span class="ac__shield" aria-hidden="true">
+      <svg class="ac-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+    </span>
+    <div class="ac__headtext">
+      <h2 id="ac-title">Action Center</h2>
+      <p>Manage member access and permissions.</p>
+    </div>
+    <button class="ac__close" type="button" data-ac-close aria-label="Close Action Center">&times;</button>
+  </header>
+
+  <div class="ac__scroll">
+    <section class="ac__sec" aria-labelledby="ac-s1">
+      <h3 class="ac__h" id="ac-s1"><span class="ac__num">1.</span> Select a member</h3>
+      <div class="ac-search">
+        <svg class="ac-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" data-ac-search placeholder="Search by name, ID or voice section..." maxlength="80" autocomplete="off"
+               aria-label="Search members by name, Member ID or voice section" aria-controls="ac-results">
+      </div>
+      <ul class="ac-results" id="ac-results" data-ac-results hidden></ul>
+      <div class="ac-picked" data-ac-picked hidden></div>
+    </section>
+
+    <p class="ac__hint" data-ac-empty>Choose a member to see and change what they can open and do. Nothing changes until you press Save.</p>
+
+    <div data-ac-editor hidden>
+      <p class="ac-note" data-ac-note hidden></p>
+
+      <section class="ac__sec" aria-labelledby="ac-s2">
+        <h3 class="ac__h" id="ac-s2"><span class="ac__num">2.</span> Panel access</h3>
+        <p class="ac__sub">Choose which pages the member can access.</p>
+        <div data-ac-panels></div>
+        <div class="ac-voices" data-ac-voices></div>
+      </section>
+
+      <section class="ac__sec" aria-labelledby="ac-s3">
+        <h3 class="ac__h" id="ac-s3"><span class="ac__num">3.</span> Action permissions</h3>
+        <p class="ac__sub">Control what the member can do inside a panel.</p>
+        <div data-ac-actions></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="ac__foot">
+    <p class="ac__status" data-ac-status role="status" aria-live="polite"></p>
+    <button class="btn btn--gold btn--block" type="button" data-ac-save disabled>
+      <svg class="ac-icon ac-icon--btn" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>
+      Save Changes
+    </button>
+    <button class="ac__reset" type="button" data-ac-reset hidden>Reset to position defaults</button>
+  </footer>
+</aside>
+
+<script src="{{ url_for('static', filename='js/action_center.js') }}" defer></script>

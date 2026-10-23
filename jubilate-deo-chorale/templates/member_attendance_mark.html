@@ -1,0 +1,46 @@
+{#
+  member_attendance_mark.html - SECRETARY: RECORD WHO ATTENDED ONE SESSION
+  One row per member. "Not recorded" leaves that member out (or removes a mistake).
+  The choices (Present, Late, Excused, Absent) are ATTENDANCE_STATUSES in app.py.
+#}
+{% extends "member_base.html" %}
+{% block title %}{{ session_row.title }}{% endblock %}
+{% block nav_home %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('member_attendance_manage') }}">&larr; Attendance</a></p>
+    <h1>{{ session_row.title }}</h1>
+    <p class="page-head__lead">{{ session_row.session_date|pretty_date }}</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide">
+    {% if members %}
+      <form method="post" action="{{ url_for('member_attendance_mark', session_id=session_row.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="mark-tools"><button type="button" class="btn btn--outline btn--sm" data-mark-all="present">Mark everyone present</button>
+          <button type="button" class="btn btn--outline btn--sm" data-mark-all="">Clear all</button></p>
+        <div class="table-wrap">
+          <table class="table table--mark">
+            <thead><tr><th scope="col">Member</th>{% for code, label in statuses.items() %}<th scope="col">{{ label }}</th>{% endfor %}<th scope="col">Not recorded</th></tr></thead>
+            <tbody>
+              {% for m in members %}
+                <tr>
+                  <td data-label="Member" class="td--primary"><strong>{{ m.name }}</strong> <small class="muted">{{ m.voice_name }}</small></td>
+                  {% for code, label in statuses.items() %}
+                    <td data-label="{{ label }}"><label class="radio"><input type="radio" name="status_{{ m.id }}" value="{{ code }}" {% if m.status == code %}checked{% endif %}><span class="sr-only">{{ label }}</span></label></td>
+                  {% endfor %}
+                  <td data-label="Not recorded"><label class="radio"><input type="radio" name="status_{{ m.id }}" value="" {% if not m.status %}checked{% endif %}><span class="sr-only">Not recorded</span></label></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions"><a class="btn btn--outline" href="{{ url_for('member_attendance_manage') }}">Back</a><button class="btn btn--primary" type="submit">Save attendance</button></div>
+      </form>
+    {% else %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No members to record</p><p class="empty__text">Active members will be listed here.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,206 @@
+{#
+  =====================================================================
+  dashboard.html - THE ADMIN DASHBOARD (home page after signing in)
+  =====================================================================
+  The side menu, top bar and footer come from base.html.
+  This file is the content in the middle.
+
+  EVERYTHING SHOWN HERE COMES FROM THE DATABASE. Nothing is made up.
+  If a feature has not been built yet, an empty message is shown.
+  The lists are prepared in app.py (the dashboard function).
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [GREETING]         Welcome heading with the administrator's name
+    [QUICK ACTIONS]    The four action buttons (directly under the heading)
+    [UPCOMING]         Upcoming activities list
+    [RECENT]           Recent activity list
+    [LOGO REMINDER]    Reminder card (disappears once logo.png exists)
+    [EMPTY STATE]      The reusable "nothing here yet" message
+
+  Card colours, spacing and layout: search "DASHBOARD REDESIGN" in style.css.
+  All names, titles and places are escaped automatically by Flask, so
+  nothing typed by a user can break the page.
+#}
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block body_class %}page-dashboard{% endblock %}
+
+{# Makes "Dashboard" highlighted in the side menu #}
+{% block nav_dashboard %}is-active{% endblock %}
+
+{% block content %}
+
+  {# Small line icons used on this page. Use like:  {{ ico('calendar') }}  #}
+  {% macro ico(name) %}
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      {% if name == 'bolt' %}<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>
+      {% elif name == 'user' %}<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c0-3.7 3.1-6 7-6s7 2.3 7 6"/>
+      {% elif name == 'calendar' %}<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>
+      {% elif name == 'announce' %}<path d="M4 10v4h3l7 4V6L7 10zM18 9a4 4 0 010 6"/>
+      {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+      {% elif name == 'clock' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+      {% elif name == 'chevron' %}<path d="M9 6l6 6-6 6"/>
+      {% elif name == 'arrow' %}<path d="M5 12h14M13 6l6 6-6 6"/>
+      {% elif name == 'doc' %}<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5"/>
+      {% elif name == 'star' %}<path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.7-4.8 2.7 1-5.4-4-3.8 5.4-.7z"/>
+      {% endif %}
+    </svg>
+  {% endmacro %}
+
+  {# [EMPTY STATE] Reusable message shown when a list has nothing to show.
+     Use it like:  {{ empty_state("Title", "Explanation") }} #}
+  {% macro empty_state(title, text, icon='calendar') %}
+    <div class="empty">
+      <span class="empty__icon" aria-hidden="true">{{ ico(icon) }}</span>
+      <p class="empty__title">{{ title }}</p>
+      <p class="empty__text">{{ text }}</p>
+    </div>
+  {% endmacro %}
+
+  {# =====================================================================
+     [GREETING] Greeting line, full name, a short tagline and a quote.
+     Change "Peace be with you," or the two lines of text to anything you prefer.
+     ===================================================================== #}
+  <header class="dash-head">
+    <div class="dash-head__text">
+      <p class="dash-head__eyebrow">Peace be with you,</p>
+      <h1>{{ g.user.full_name }}</h1>
+      <p class="dash-head__lead">Together in faith, through music, for His greater glory.</p>
+    </div>
+    <aside class="dash-head__aside" aria-label="Today">
+      <p class="dash-head__date">{{ today }}</p>
+      <blockquote class="dash-quote">
+        <p>&ldquo;Sing with faith.<br>Serve through music.&rdquo;</p>
+      </blockquote>
+    </aside>
+  </header>
+
+  {# =====================================================================
+     [QUICK ACTIONS] Four shortcuts, directly under the heading.
+     A button is a real link ONLY when its page exists. Otherwise it is
+     shown greyed out ("Coming soon", or "No access" if your role may not open it),
+     so there are never broken links.
+     To switch one on, create the page with the function name listed in
+     QUICK_ACTIONS in app.py (for example: def members_new()).
+     The icon is chosen from the words in the label (member, schedule, announce, music).
+     ===================================================================== #}
+  <section class="qa" aria-labelledby="qa-title">
+    <h2 class="section-title" id="qa-title">{{ ico('bolt') }}<span>Quick Actions</span></h2>
+    <ul class="actions">
+      {% for action in actions %}
+        {% set key = action.label|lower %}
+        {% if 'member' in key %}{% set icon = 'user' %}
+        {% elif 'schedule' in key or 'rehearsal' in key %}{% set icon = 'calendar' %}
+        {% elif 'announce' in key %}{% set icon = 'announce' %}
+        {% elif 'music' in key or 'upload' in key %}{% set icon = 'music' %}
+        {% else %}{% set icon = 'star' %}{% endif %}
+        <li>
+          {% if action.url %}
+            <a class="action" href="{{ action.url }}">
+              <span class="action__icon" aria-hidden="true">{{ ico(icon) }}</span>
+              <span class="action__text">
+                <span class="action__label">{{ action.label }}</span>
+                <span class="action__hint">{{ action.hint }}</span>
+              </span>
+              <span class="action__go" aria-hidden="true">{{ ico('chevron') }}</span>
+            </a>
+          {% else %}
+            <span class="action action--off" aria-disabled="true">
+              <span class="action__icon" aria-hidden="true">{{ ico(icon) }}</span>
+              <span class="action__text">
+                <span class="action__label">{{ action.label }}</span>
+                <span class="action__hint">{{ action.hint }}</span>
+                <span class="action__tag">{{ action.tag }}</span>
+              </span>
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# =====================================================================
+     Two columns: [UPCOMING] on the left, [RECENT] on the right.
+     They sit side by side on desktop and stack on tablets and phones.
+     ===================================================================== #}
+  <section class="dash-cols">
+
+    {# [UPCOMING] Next activities from today onward.
+       Shows the name, date, time and place (time and place only when available). #}
+    <article class="panel panel--upcoming" aria-labelledby="up-title">
+      <header class="panel__head">
+        <h2 id="up-title" class="panel__title">{{ ico('calendar') }}<span>Upcoming Activities</span></h2>
+        {% if upcoming_total %}<span class="panel__meta">{{ upcoming_total }} upcoming</span>{% endif %}
+        {% if can('schedule.view') %}<a class="link-action link-action--go" href="{{ url_for('schedule_list') }}">View schedule {{ ico('arrow') }}</a>{% endif %}
+      </header>
+
+      {% if upcoming is none %}
+        {{ empty_state("The schedule isn't set up yet", "Rehearsals and Masses will be listed here once scheduling is added.") }}
+      {% elif not upcoming %}
+        {{ empty_state("No upcoming activities", "When a rehearsal or Mass is scheduled, the next ones will appear here.") }}
+      {% else %}
+        <ul class="events">
+          {% for item in upcoming %}
+            <li class="event">
+              <div class="event__date" aria-hidden="true">
+                <span class="event__month">{{ item.month }}</span>
+                <span class="event__day">{{ item.day }}</span>
+              </div>
+              <div class="event__body">
+                <p class="event__title">{{ item.title }}</p>
+                <p class="event__meta">
+                  <span>{{ item.date_label }}</span>
+                  {% if item.time %}<span>{{ item.time }}</span>{% endif %}
+                  {% if item.location %}<span>{{ item.location }}</span>{% endif %}
+                </p>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </article>
+
+    {# [RECENT] The latest recorded administrative changes (from the activity_log table).
+       Add new kinds of entries with log_activity() in app.py.
+       The coloured icon is chosen from the words in the entry (announcement, music, voice/position,
+       schedule, member). Anything else gets the plain burgundy icon. #}
+    <article class="panel panel--recent" aria-labelledby="rec-title">
+      <header class="panel__head">
+        <h2 id="rec-title" class="panel__title">{{ ico('clock') }}<span>Recent Activity</span></h2>
+      </header>
+
+      {% if recent %}
+        <ul class="log">
+          {% for entry in recent %}
+            {% set key = entry.label|lower %}
+            {% if 'announce' in key %}{% set kind = 'announce' %}{% set icon = 'doc' %}
+            {% elif 'music' in key %}{% set kind = 'music' %}{% set icon = 'music' %}
+            {% elif 'voice' in key or 'position' in key %}{% set kind = 'choice' %}{% set icon = 'doc' %}
+            {% elif 'schedule' in key or 'activity' in key or 'rehearsal' in key %}{% set kind = 'schedule' %}{% set icon = 'calendar' %}
+            {% elif 'member' in key %}{% set kind = 'member' %}{% set icon = 'user' %}
+            {% else %}{% set kind = 'other' %}{% set icon = 'star' %}{% endif %}
+            <li class="log__item">
+              <span class="log__icon log__icon--{{ kind }}" aria-hidden="true">{{ ico(icon) }}</span>
+              <div>
+                <p class="log__title">{{ entry.label }}{% if entry.detail %}: <strong>{{ entry.detail }}</strong>{% endif %}</p>
+                <p class="log__meta">{% if entry.actor %}By {{ entry.actor }} &middot; {% endif %}{{ entry.when }}</p>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ empty_state("No changes recorded yet", "Administrative changes, such as adding members or posting announcements, will appear here.", "clock") }}
+      {% endif %}
+    </article>
+  </section>
+
+  {# [LOGO REMINDER] Shown only while static/images/logo.png does not exist. #}
+  {% if not has_logo %}
+    <section class="panel panel--empty panel--wide">
+      <h2>Choir logo</h2>
+      <p>Save your logo as <code>static/images/logo.png</code>. It will replace the placeholder on every page.</p>
+    </section>
+  {% endif %}
+
+{% endblock %}

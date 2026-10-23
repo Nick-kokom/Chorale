@@ -1,0 +1,120 @@
+{#
+  schedule_form.html - ADD OR EDIT A SCHEDULE
+  Only people who may manage the schedule can open this page (checked in app.py: schedule_access).
+  The rules for each field are in read_schedule_form() in app.py. Red messages come from there.
+  There is ONE field for the kind of activity: "Activity type" (the form value is still called "category",
+  so the server rules and the database are unchanged). It is a real <select> that static/js/schedule.js
+  upgrades to a dropdown of coloured chips; without JavaScript the plain select simply stays visible.
+  [ASSIGN] who the activity is for: leave everything unticked for the whole choir.
+#}
+{% extends layout %}
+{% block title %}{{ 'Add schedule' if mode == 'new' else 'Edit schedule' }}{% endblock %}
+{% block body_class %}page-schedule page-schedule-form{% endblock %}
+{% block nav_schedule %}is-active{% endblock %}
+
+{% block content %}
+  {% set back_url = url_for('schedule_list') if mode == 'new' else url_for('schedule_view', activity_id=a.id) %}
+  <header class="sf-head">
+    <a class="back-link" href="{{ back_url }}">&larr; {{ 'Back to Schedule' if mode == 'new' else 'Back to the activity' }}</a>
+    <h1>{{ 'Add schedule' if mode == 'new' else 'Edit schedule' }}</h1>
+    <p class="page-head__lead">{{ 'Add a rehearsal, service or gathering to the choir calendar.' if mode == 'new' else 'Change the details of this activity.' }} Fields marked <span class="req">*</span> are required.</p>
+  </header>
+
+  <section class="panel sf-panel">
+    <form method="post" action="{{ url_for('schedule_new') if mode == 'new' else url_for('schedule_edit', activity_id=a.id) }}" class="form sf-form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="sf-grid">
+
+        <div class="field sf-span-2{% if errors.title %} field--error{% endif %}">
+          <label for="s_title">Title <span class="req">*</span></label>
+          <input id="s_title" name="title" type="text" maxlength="120" required value="{{ values.title }}" placeholder="For example: Sunday rehearsal">
+          {% if errors.title %}<p class="field__error">{{ errors.title }}</p>{% endif %}
+        </div>
+
+        {# Activity type: the only "what kind" field. Chips dropdown (progressive enhancement of the select). #}
+        <div class="field sf-span-2{% if errors.category %} field--error{% endif %}" data-chipsel>
+          <label id="s_category_lbl" for="s_category">Activity type <span class="req">*</span></label>
+          <select id="s_category" name="category" required data-required-message="Choose a category.">
+            <option value="">Choose an activity type</option>
+            {% for code, label in categories.items() %}<option value="{{ code }}" {% if values.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <div class="chipsel" hidden>
+            <button type="button" class="chipsel__btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="s_category_lbl">
+              <span class="chipsel__value" data-chipsel-value></span>
+              <svg class="chipsel__caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <ul class="chipsel__menu" role="listbox" hidden>
+              {% for code, label in categories.items() %}
+                <li role="option" tabindex="-1" data-value="{{ code }}" aria-selected="{{ 'true' if values.category == code else 'false' }}">
+                  <span class="cat cat--{{ code }}">{{ label }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% if errors.category %}<p class="field__error">{{ errors.category }}</p>{% endif %}
+        </div>
+
+        <div class="field sf-span-2{% if errors.location %} field--error{% endif %}">
+          <label for="s_location">Venue <span class="req">*</span></label>
+          <input id="s_location" name="location" type="text" maxlength="120" required value="{{ values.location }}" placeholder="For example: Parish church, choir loft">
+          {% if errors.location %}<p class="field__error">{{ errors.location }}</p>{% endif %}
+        </div>
+
+        <div class="field{% if errors.activity_date %} field--error{% endif %}">
+          <label for="s_date">Date <span class="req">*</span></label>
+          <input id="s_date" name="activity_date" type="date" required {% if mode == 'new' %}min="{{ today }}"{% endif %} max="2100-12-31"
+                 value="{{ values.activity_date }}" data-required-message="Choose the date.">
+          {% if errors.activity_date %}<p class="field__error">{{ errors.activity_date }}</p>{% endif %}
+        </div>
+
+        <div class="field{% if errors.start_time %} field--error{% endif %}">
+          <label for="s_time">Time <span class="req">*</span></label>
+          <input id="s_time" name="start_time" type="time" required value="{{ values.start_time }}" data-required-message="Choose the start time.">
+          {% if errors.start_time %}<p class="field__error">{{ errors.start_time }}</p>{% endif %}
+        </div>
+
+        {# [ASSIGN] voice sections (tick the ones it is for) #}
+        <div class="field sf-span-full sf-voices" data-checkbox-group>
+          <div class="sf-voices__head">
+            <span class="field__label">Voice sections</span>
+            <span class="sf-voices__tools"><button type="button" class="link-action" data-select-all>Tick all</button> <span aria-hidden="true">&middot;</span> <button type="button" class="link-action" data-select-none>Clear</button></span>
+          </div>
+          <div class="sch-checks">
+            {% for v in voices %}
+              <label class="checkbox"><input type="checkbox" name="voice_ids" value="{{ v.id }}" {% if v.id in voice_ids %}checked{% endif %}><span>{{ v.name }}</span></label>
+            {% endfor %}
+          </div>
+          <p class="field__hint">Leave everything unticked if the whole choir should attend.</p>
+        </div>
+
+        {# [ASSIGN] or particular members (optional) #}
+        <div class="field sf-span-full" data-checkbox-group>
+          <details class="sch-members sf-members" {% if member_ids %}open{% endif %}>
+            <summary>Assign particular members <span class="optional">(optional)</span></summary>
+            <p class="field__hint"><button type="button" class="link-action" data-select-all>Tick everyone</button> &middot; <button type="button" class="link-action" data-select-none>Clear</button></p>
+            <div class="sch-picks">
+              {% for m in members %}
+                <label class="checkbox"><input type="checkbox" name="member_ids" value="{{ m.id }}" {% if m.id in member_ids %}checked{% endif %}>
+                  <span>{{ m.name }} <small class="muted">{{ m.voice_name }}</small></span></label>
+              {% else %}
+                <p class="muted">There are no members to choose from yet.</p>
+              {% endfor %}
+            </div>
+          </details>
+        </div>
+
+        <div class="field sf-span-full{% if errors.instructions %} field--error{% endif %}">
+          <label for="s_notes">Instructions <span class="optional">(optional)</span></label>
+          <textarea id="s_notes" name="instructions" rows="3" maxlength="{{ notes_max }}" placeholder="What to bring, what to wear, songs to prepare...">{{ values.instructions }}</textarea>
+          {% if errors.instructions %}<p class="field__error">{{ errors.instructions }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-actions sf-actions">
+        <a class="btn btn--outline" href="{{ back_url }}">Cancel</a>
+        <button class="btn btn--primary" type="submit">{{ '+ Add schedule' if mode == 'new' else 'Save changes' }}</button>
+      </div>
+    </form>
+  </section>
+  <script src="{{ url_for('static', filename='js/schedule.js') }}" defer></script>
+{% endblock %}

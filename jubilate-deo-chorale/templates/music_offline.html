@@ -1,0 +1,29 @@
+{#
+  music_offline.html - WHAT OPENS WHEN THE NETWORK IS DOWN
+  Route: music_offline_shell in app.py. A small standalone page (no menu, no sign-in needed) that the browser keeps
+  ready. It holds no private data: static/js/music_offline.js fills it with the list of files saved on THIS device.
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#5C1226">
+  <title>Music Library (offline) | {{ app_name }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/music.css">
+</head>
+<body class="page-music-offline">
+  <main class="ml-off" id="main">
+    <header class="ml-off__head">
+      <p class="page-head__date">{{ app_name }}</p>
+      <h1>Music Library</h1>
+      <p class="ml-off__state" data-off-state role="status">You are offline. These files are saved on this device.</p>
+      <p><a class="btn btn--primary btn--sm" href="/music/" data-off-reconnect>Try the full library</a></p>
+    </header>
+    <ul class="ml-off__list" data-off-list></ul>
+    <p class="ml-off__empty" data-off-empty hidden>No files are saved on this device yet. Turn on &ldquo;Available offline&rdquo; for a file while you are online.</p>
+  </main>
+  <script src="/static/js/music_offline.js" defer></script>
+</body>
+</html>

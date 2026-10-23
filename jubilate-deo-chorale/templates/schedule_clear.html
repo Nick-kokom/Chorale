@@ -1,0 +1,64 @@
+{#
+  schedule_clear.html - CONFIRMATION PAGE FOR CLEARING SCHEDULES (administrator only)
+  Use it after pilot testing. Nothing is erased on this page until the form is sent with the exact
+  phrase AND the administrator's password. The server checks both again (schedule_clear in app.py).
+  A backup copy of the database is saved first, in instance/backups.
+#}
+{% extends "base.html" %}
+{% block title %}Clear schedules{% endblock %}
+{% block body_class %}page-schedule page-roster-reset{% endblock %}
+{% block nav_schedule %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('schedule_list') }}">&larr; Schedule</a></p>
+    <h1>Clear schedules</h1>
+    <p class="page-head__lead">Permanently remove schedules, for example the cancelled ones left over from pilot testing.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide danger-zone">
+    <header class="panel__head"><h2>Choose what to clear</h2></header>
+
+    {% if not counts.total %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">There are no schedules</p><p class="empty__text">Nothing to clear.</p></div>
+    {% else %}
+      <form method="post" action="{{ url_for('schedule_clear') }}" novalidate
+            data-confirm="Last check: permanently delete the chosen schedules? This cannot be undone from the app.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="sch-clear__choices">
+          <legend class="sr-only">What to clear</legend>
+          <label class="checkbox"><input type="radio" name="scope" value="cancelled" {% if counts.cancelled %}checked{% else %}disabled{% endif %}>
+            <span><strong>Cancelled schedules only</strong> ({{ counts.cancelled }}). Active schedules stay.</span></label>
+          <label class="checkbox"><input type="radio" name="scope" value="all" {% if not counts.cancelled %}checked{% endif %}>
+            <span><strong>Every schedule</strong> ({{ counts.total }}), active and cancelled.</span></label>
+        </fieldset>
+
+        <label class="checkbox"><input type="checkbox" name="with_attendance" value="1">
+          <span>Also delete the attendance sheets taken for them ({{ counts.sheets }} sheet{{ '' if counts.sheets == 1 else 's' }}, {{ counts.records }} attendance record{{ '' if counts.records == 1 else 's' }}).
+            Leave this unticked to keep the attendance; those sheets simply stop being linked to a schedule.</span></label>
+
+        <p><strong>It cannot be undone from the app.</strong> Members, voice sections, announcements and all other attendance are not touched.
+          A backup copy of the database is saved automatically first, in <code>instance/backups</code>.</p>
+
+        <div class="field">
+          <label for="confirm_phrase">Type <strong class="mono">{{ phrase }}</strong> to confirm</label>
+          <input id="confirm_phrase" name="confirm_phrase" type="text" required autocomplete="off" autocapitalize="characters" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="password">Your password</label>
+          <div class="field__group">
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="field__toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+          </div>
+        </div>
+
+        <p class="danger-zone__action">
+          <a class="btn btn--outline" href="{{ url_for('schedule_list') }}">Cancel</a>
+          <button class="btn btn--danger" type="submit">Clear schedules</button>
+        </p>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}

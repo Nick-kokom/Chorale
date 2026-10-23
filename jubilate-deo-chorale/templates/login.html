@@ -1,0 +1,127 @@
+{#
+  =====================================================================
+  login.html - THE SIGN-IN PAGE (two steps on one screen)
+  =====================================================================
+  STEP 1 - SPLASH: logo, tagline and a round music button.
+  STEP 2 - LOGIN BOX: a burgundy box with the sign-in form.
+  Clicking or tapping the round button switches from step 1 to step 2
+  (the switching code is in static/js/app.js).
+
+  If there is a message to show (for example "The email or password is
+  incorrect" or "You have signed out"), the page skips the splash and
+  shows the login box straight away.
+
+  QUICK GUIDE - press Ctrl+F and search for the tag:
+    [SPLASH]      Step 1 as a whole
+    [LOGO]        The big logo
+    [TAGLINE]     The words under the logo
+    [ICON SLOT]   WHERE TO ADD YOUR OWN ICON IMAGE (.png)
+    [LOGIN BOX]   Step 2: the burgundy box
+    [HEADING]     "Welcome" and the line under it
+    [USERNAME]    The "Email or Member ID" input
+    [PASSWORD]    The password input and the Show/Hide button
+    [BUTTON]      The Sign in button
+
+  Colours, sizes and animation timing: static/css/style.css
+  (search [SPLASH] and [LOGIN BOX]).
+#}
+{% extends "base.html" %}
+
+{# Text on the browser tab: "Sign in | Jubilate Deo Chorale" #}
+{% block title %}Sign in{% endblock %}
+{% block body_class %}page-login{% endblock %}
+
+{% block auth_content %}
+
+  {# True when there is a message to show. Used to skip the splash. #}
+  {% set has_messages = get_flashed_messages()|length > 0 %}
+
+  {# =====================================================================
+     [SPLASH] STEP 1
+     Hidden automatically when there is a message to show.
+     ===================================================================== #}
+  <div class="splash" data-splash {% if has_messages %}hidden{% endif %}>
+
+    {# [LOGO] Your logo is static/images/logo.png (it plays the zoom-in
+       animation). To change the logo size, edit --logo-xl in style.css. #}
+    <div class="splash__logo">
+      {{ logo('xl') }}
+    </div>
+
+    {# [TAGLINE] The words come from TAGLINE in app.py.
+       Colour: --tagline-color in style.css. #}
+    <p class="splash__tagline">{{ tagline }}</p>
+
+    {# =================================================================
+       THE ROUND BUTTON (opens the login box)
+       Size and colour: --note-btn-size / --note-btn-bg in style.css
+       ================================================================= #}
+    <button class="note-btn" type="button" data-open-login aria-label="Continue to sign in">
+
+      {# ===============================================================
+         [ICON SLOT] - WHERE TO ADD YOUR OWN ICON IMAGE (.png)
+
+         HOW TO ADD IT:
+           1. Save your icon as  static/images/note-icon.png
+              (a PNG with a transparent background; white or light gold
+              looks best on the burgundy button).
+           2. Copy the line below and paste it on a new line UNDER this
+              comment:
+
+              <img class="note-btn__icon" src="{{ url_for('static', filename='images/note-icon.png') }}" alt="">
+
+           3. Delete the line that says note-btn__fallback just below.
+              (It is the temporary music note character.)
+         =============================================================== #}
+      <span class="note-btn__fallback" aria-hidden="true">&#9834;</span>
+
+    </button>
+  </div>
+
+
+  {# =====================================================================
+     [LOGIN BOX] STEP 2 - the burgundy box
+     Colour and width: --login-card-bg and --login-card-width in style.css
+     ===================================================================== #}
+  <section class="login-card" data-login-card {% if not has_messages %}hidden{% endif %} aria-label="Sign in">
+
+    {# Notice boxes ("You have signed out", "The email or password is
+       incorrect") appear here. #}
+    {{ flashes() }}
+
+    {# [HEADING] Change these two lines to change the greeting.
+       The heading is shown in CAPITALS by the stylesheet. #}
+    <h2 class="login-card__title">Welcome</h2>
+    <p class="login-card__lead">Sign in with your email or Member ID.</p>
+
+    <form method="post" action="{{ url_for('login') }}" class="form" novalidate>
+      {# Security token. Do not remove. #}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {# [USERNAME] Administrators type their email address; choir members type their
+         Member ID (for example JDC-0001). The server tells them apart. #}
+      <div class="field">
+        <label for="identifier">Email or Member ID</label>
+        <input id="identifier" name="identifier" type="text" autocomplete="username" value="{{ identifier }}"
+               required autocapitalize="off" spellcheck="false">
+      </div>
+
+      {# [PASSWORD] The "Show" button is controlled by static/js/app.js #}
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="field__group">
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button type="button" class="field__toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      {# [FORGOT PASSWORD] Link to the reset page (staff accounts that sign in with an email) #}
+      <p class="login-card__forgot"><a href="{{ url_for('forgot_password') }}">Forgot password?</a></p>
+
+      {# [BUTTON] Change the words between the tags.
+         Colour: search .btn--gold in style.css #}
+      <button class="btn btn--gold btn--block" type="submit">Sign in</button>
+    </form>
+  </section>
+
+{% endblock %}

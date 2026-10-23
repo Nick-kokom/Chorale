@@ -1,0 +1,257 @@
+{#
+  announcements_admin.html - ADMINISTRATOR: POST AND MANAGE ANNOUNCEMENTS
+  Announcements go into a queue and appear on the members' dashboards in a moment.
+  [NEW] the form    [EVENT] optional "Also add to Schedule as an event"    [LIST] every announcement, with Retire / Restore
+  [PREVIEW] next events created from announcements
+  The event fields use the same names as the Schedule form (activity_date, start_time, location, category), so the
+  server checks them with the same rules as the Schedule page (see read_announcement_event in app.py).
+#}
+{% extends "base.html" %}
+{% from "_schedule_macros.html" import activity_row %}
+{% block title %}Announcements{% endblock %}
+{% block body_class %}page-members{% endblock %}
+{% block nav_announcements %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date">Choir</p>
+    <h1>Announcements</h1>
+    <p class="page-head__lead">Share news and coordinate choir activities. Officers can also post from their own dashboard.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  {# [NEW] #}
+  <section class="panel panel--wide" id="new">
+    <header class="panel__head"><h2>New announcement</h2></header>
+    <form method="post" action="{{ url_for('announcements_admin') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid">
+        <div class="field{% if errors.title %} field--error{% endif %}">
+          <label for="a_title">Title <span class="req">*</span></label>
+          <input id="a_title" name="title" type="text" maxlength="120" required value="{{ values.title }}">
+          {% if errors.title %}<p class="field__error">{{ errors.title }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.audience %} field--error{% endif %}">
+          <label for="a_audience">Audience</label>
+          <select id="a_audience" name="audience">
+            <option value="all" {% if values.audience == 'all' %}selected{% endif %}>General (everyone)</option>
+            {% for v in voices %}<option value="{{ v.id }}" {% if values.audience == v.id|string %}selected{% endif %}>{{ v.name }} only</option>{% endfor %}
+          </select>
+          {% if errors.audience %}<p class="field__error">{{ errors.audience }}</p>{% endif %}
+        </div>
+        <div class="field field--full{% if errors.body %} field--error{% endif %}">
+          <label for="a_body">Announcement <span class="req">*</span></label>
+          <textarea id="a_body" name="body" rows="4" maxlength="2000" required>{{ values.body }}</textarea>
+          {% if errors.body %}<p class="field__error">{{ errors.body }}</p>{% endif %}
+        </div>
+
+        {# [EVENT] Only offered to people who may manage the schedule. The server checks this again on submit. #}
+        {% if can_schedule %}
+          <div class="ann-toggle">
+            <label class="checkbox" for="a_event">
+              <input id="a_event" name="add_to_schedule" type="checkbox" value="1" data-event-toggle
+                     aria-controls="a_event_fields" aria-expanded="{{ 'true' if ev.add else 'false' }}" {% if ev.add %}checked{% endif %}>
+              <span class="ann-toggle__text">
+                <strong>Also add to Schedule as an event</strong>
+                <small>Creates an event on the Schedule and links it to this announcement.</small>
+              </span>
+            </label>
+
+            <div class="ann-event" id="a_event_fields" {% if not ev.add %}hidden{% endif %}>
+              <div class="ann-event__grid">
+                <div class="field{% if errors.ev_activity_date %} field--error{% endif %}">
+                  <label for="a_ev_date">Event date <span class="req">*</span></label>
+                  <input id="a_ev_date" name="activity_date" type="date" min="{{ today }}" max="2100-12-31" value="{{ ev.activity_date }}"
+                         data-event-input data-required-message="Choose the date." {% if ev.add %}required{% else %}disabled{% endif %}>
+                  {% if errors.ev_activity_date %}<p class="field__error">{{ errors.ev_activity_date }}</p>{% endif %}
+                </div>
+                <div class="field{% if errors.ev_start_time %} field--error{% endif %}">
+                  <label for="a_ev_time">Start time <span class="req">*</span></label>
+                  <input id="a_ev_time" name="start_time" type="time" value="{{ ev.start_time }}"
+                         data-event-input data-required-message="Choose the start time." {% if ev.add %}required{% else %}disabled{% endif %}>
+                  {% if errors.ev_start_time %}<p class="field__error">{{ errors.ev_start_time }}</p>{% endif %}
+                </div>
+                <div class="field{% if errors.ev_location %} field--error{% endif %}">
+                  <label for="a_ev_venue">Venue <span class="req">*</span></label>
+                  <input id="a_ev_venue" name="location" type="text" maxlength="120" value="{{ ev.location }}" placeholder="For example: Parish church"
+                         data-event-input {% if ev.add %}required{% else %}disabled{% endif %}>
+                  {% if errors.ev_location %}<p class="field__error">{{ errors.ev_location }}</p>{% endif %}
+                </div>
+                <div class="field{% if errors.ev_category %} field--error{% endif %}">
+                  <label for="a_ev_category">Category <span class="req">*</span></label>
+                  <select id="a_ev_category" name="category" data-event-input data-required-message="Choose a category."
+                          {% if ev.add %}required{% else %}disabled{% endif %}>
+                    <option value="">Choose a category</option>
+                    {% for code, label in categories.items() %}<option value="{{ code }}" {% if ev.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                  </select>
+                  {% if errors.ev_category %}<p class="field__error">{{ errors.ev_category }}</p>{% endif %}
+                </div>
+              </div>
+              {% if errors.ev_duplicate %}<p class="field__error">{{ errors.ev_duplicate }} Nothing was posted.</p>{% endif %}
+              <p class="ann-event__note">The event will appear on the Schedule and under Upcoming Activities on the dashboard. An announcement for one voice section creates an event for that section; General creates one for the whole choir.</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit" data-submit-label data-label-off="Publish announcement" data-label-on="Publish announcement &amp; add event">{{ 'Publish announcement & add event' if ev.add else 'Publish announcement' }}</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="ann-layout{% if can('schedule.view') %} ann-layout--side{% endif %}">
+    {# [LIST] #}
+    <section class="panel">
+      <header class="panel__head"><h2>All announcements</h2><span class="panel__meta">{{ rows|length }} shown</span></header>
+      {% if rows %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Title</th><th scope="col">For</th><th scope="col">Posted by</th><th scope="col">When</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              {% for a in rows %}
+                <tr>
+                  <td data-label="Title" class="td--primary">
+                    <strong>{{ a.title }}</strong>
+                    {% if a.event %}
+                      <span class="ann-link">
+                        {% if can('schedule.view') %}<a class="badge badge--linked" href="{{ url_for('schedule_view', activity_id=a.event.id) }}">Linked to Schedule</a>{% else %}<span class="badge badge--linked">Linked to Schedule</span>{% endif %}
+                        {% if a.event.cancelled %}<span class="badge badge--inactive">Event cancelled</span>{% endif %}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td data-label="For">{{ a.audience_name or 'Everyone' }}</td>
+                  <td data-label="Posted by">{{ a.author_name }}</td>
+                  <td data-label="When"><div class="ann-when">{{ (a.published_at or a.created_at)|pretty_stamp }}
+                    {% if a.event %}<span class="ann-event-line">Event: {{ a.event.date_label }}{% if a.event.time %} &middot; {{ a.event.time }}{% endif %}<br>{{ a.event.venue }} &middot; {{ a.event.category_label }}</span>{% endif %}
+                  </div></td>
+                  <td data-label="Status">{% if a.status == 'queued' %}<span class="badge badge--temporarily_inactive">Queued</span>{% elif a.is_active %}<span class="badge badge--active">Showing</span>{% else %}<span class="badge badge--inactive">Retired</span>{% endif %}</td>
+                  <td data-label="Actions">
+                    <div class="table__actions">
+                      {% if a.status == 'published' %}
+                        <form method="post" class="inline" action="{{ url_for('announcements_retire', announcement_id=a.id) }}">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <input type="hidden" name="active" value="{{ '0' if a.is_active else '1' }}">
+                          <button class="link-action" type="submit">{{ 'Retire' if a.is_active else 'Restore' }}</button>
+                        </form>
+                      {% endif %}
+                      {# [DELETE] Permanent delete, for Active, Retired and queued announcements alike. The button only opens the
+                         confirmation dialog below; the server checks the permission and the confirmation again. #}
+                      {% if can('announcements.delete') %}
+                        <button class="icon-btn icon-btn--danger" type="button" data-ann-delete
+                                data-url="{{ url_for('announcements_delete', announcement_id=a.id) }}" data-title="{{ a.title }}"
+                                data-event="{{ '1' if a.event else '0' }}"
+                                {% if a.event %}data-event-label="{{ a.event.date_label }}{% if a.event.time %} &middot; {{ a.event.time }}{% endif %} &middot; {{ a.event.venue }}{% if a.event.cancelled %} (cancelled){% endif %}"{% endif %}
+                                aria-label="Delete permanently: {{ a.title }}" title="Delete permanently">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 001 1h8a1 1 0 001-1l1-12M9 7V4h6v3"/></svg>
+                        </button>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No announcements yet</p><p class="empty__text">Post the first one above. Members will see it on their dashboard.</p></div>
+      {% endif %}
+    </section>
+
+    {# [PREVIEW] #}
+    {% if can('schedule.view') %}
+      <aside class="panel" aria-labelledby="prev-title">
+        <header class="panel__head"><h2 id="prev-title">Schedule preview</h2><a class="link-action" href="{{ url_for('schedule_list') }}">View full schedule</a></header>
+        {% if preview %}
+          <ul class="sch-list sch-list--compact">{% for a in preview %}{{ activity_row(a, False, True) }}{% endfor %}</ul>
+        {% else %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No upcoming events</p><p class="empty__text">Events created together with an announcement will appear here.</p></div>
+        {% endif %}
+      </aside>
+    {% endif %}
+  </div>
+
+  {# [DELETE DIALOG] One shared confirmation for every row. The buttons above fill in the title, the form address and
+     (when the announcement has a linked Schedule event) the event details. Without the hidden confirm field the
+     server refuses to delete, so a stray request can never remove an announcement. #}
+  {% if can('announcements.delete') %}
+    <dialog class="sch-dialog ann-dialog" id="ann-delete-dialog" aria-labelledby="ann-del-title">
+      <div class="sch-dialog__head">
+        <h2 id="ann-del-title">Delete announcement permanently?</h2>
+        <button type="button" class="sch-dialog__x" data-ann-del-cancel aria-label="Close">&times;</button>
+      </div>
+      <form method="post" action="" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm" value="1">
+        <p class="sch-dialog__warn"><strong data-ann-del-name></strong> will be removed from the database for good.
+          <strong>This cannot be undone, and the announcement cannot be recovered.</strong> It will disappear for every member.</p>
+        <div class="ann-dialog__event" data-ann-del-event hidden>
+          <p><strong>Linked Schedule event:</strong> <span data-ann-del-event-label></span></p>
+          {% if can('schedule.clear') %}
+            <label class="checkbox"><input type="checkbox" name="delete_event" value="1" data-ann-del-event-check><span>Also permanently delete this Schedule event</span></label>
+            <p class="ann-dialog__hint">Leave this unticked to keep the event on the Schedule as an ordinary event. Its attendance sheet, if there is one, is always kept.</p>
+          {% else %}
+            <p class="ann-dialog__hint">The event will stay on the Schedule as an ordinary event.</p>
+          {% endif %}
+        </div>
+        <div class="sch-dialog__actions">
+          <button type="button" class="btn btn--outline" data-ann-del-cancel>Cancel</button>
+          <button type="submit" class="btn btn--danger">Delete permanently</button>
+        </div>
+      </form>
+    </dialog>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {# Shows the event fields only while the box is ticked. Hidden fields are also disabled and not "required", so an
+     ordinary announcement never asks for a date. The server ignores them anyway when the box is not ticked. #}
+  <script>
+    (function () {
+      var box = document.querySelector("[data-event-toggle]");
+      var panel = document.getElementById("a_event_fields");
+      var button = document.querySelector("[data-submit-label]");
+      if (!box || !panel) { return; }
+      function sync() {
+        var on = box.checked;
+        panel.hidden = !on;
+        box.setAttribute("aria-expanded", on ? "true" : "false");
+        panel.querySelectorAll("[data-event-input]").forEach(function (el) {
+          el.disabled = !on;
+          if (on) { el.setAttribute("required", ""); } else { el.removeAttribute("required"); }
+        });
+        if (button) { button.textContent = on ? button.getAttribute("data-label-on") : button.getAttribute("data-label-off"); }
+      }
+      box.addEventListener("change", sync);
+      sync();
+    })();
+  </script>
+  {# Opens the delete confirmation. If the browser has no <dialog> support it falls back to a plain confirm box. #}
+  <script>
+    (function () {
+      var dialog = document.getElementById("ann-delete-dialog");
+      if (!dialog) { return; }
+      var form = dialog.querySelector("form");
+      var name = dialog.querySelector("[data-ann-del-name]");
+      var eventBox = dialog.querySelector("[data-ann-del-event]");
+      var eventLabel = dialog.querySelector("[data-ann-del-event-label]");
+      var eventCheck = dialog.querySelector("[data-ann-del-event-check]");
+      var submit = form.querySelector('button[type="submit"]');
+      document.querySelectorAll("[data-ann-delete]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var hasEvent = button.getAttribute("data-event") === "1";
+          form.action = button.getAttribute("data-url");
+          name.textContent = "\u201c" + button.getAttribute("data-title") + "\u201d";
+          eventBox.hidden = !hasEvent;
+          eventLabel.textContent = hasEvent ? (button.getAttribute("data-event-label") || "") : "";
+          if (eventCheck) { eventCheck.checked = false; }          // keeping the event is always the default
+          submit.disabled = false;
+          if (typeof dialog.showModal === "function") { dialog.showModal(); }
+          else if (window.confirm("Permanently delete this announcement? This cannot be undone.")) { form.submit(); }
+        });
+      });
+      dialog.querySelectorAll("[data-ann-del-cancel]").forEach(function (b) { b.addEventListener("click", function () { dialog.close(); }); });
+      dialog.addEventListener("click", function (e) { if (e.target === dialog) { dialog.close(); } });   // click on the dark area
+      form.addEventListener("submit", function () { submit.disabled = true; });                           // no double delete
+    })();
+  </script>
+{% endblock %}

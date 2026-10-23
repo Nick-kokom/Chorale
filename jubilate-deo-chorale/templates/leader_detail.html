@@ -1,0 +1,58 @@
+{#
+  =====================================================================
+  leader_detail.html - ONE ORGANIZATIONAL LEADER (read-only)
+  =====================================================================
+  Opened from "View details" in the three-dot menu of Roster > Organizational Leaders (leader_detail in app.py).
+  A leader is NOT a choir member: no Member ID, voice section, status or login, and not counted in member totals.
+  Edit is only offered to roles allowed to manage members. Deleting is done from the Roster tab only.
+  Look: reuses the member profile styles (search "MEMBER DETAIL REDESIGN" in static/css/style.css).
+#}
+{% extends "base.html" %}
+
+{% block title %}{{ leader.display_name }}{% endblock %}
+{% block body_class %}page-members page-member-detail page-leader-detail{% endblock %}
+{% block nav_members %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head md-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('members_list', tab='leaders') }}">&larr; Organizational Leaders</a></p>
+    <div class="profile__head md-head__row">
+      <div class="avatar avatar--lg md-head__avatar" aria-hidden="true">{% if leader.has_photo %}<img src="{{ url_for('leader_photo', leader_id=leader.id) }}" alt="">{% else %}{{ leader.initials }}{% endif %}</div>
+      <div class="md-head__id">
+        <h1 class="profile__name">{{ leader.display_name }}</h1>
+        <p class="profile__meta"><span class="badge badge--leader">{{ leader.position_name }}</span></p>
+      </div>
+      <div class="profile__actions md-head__actions">
+        {% if can('members.manage') %}<a class="btn btn--outline btn--sm" href="{{ url_for('leader_edit', leader_id=leader.id) }}">Edit</a>{% endif %}
+      </div>
+    </div>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="md-grid">
+    <div class="stack md-col">
+      <article class="panel md-card">
+        <header class="panel__head md-card__head"><h2><span>Organizational information</span></h2></header>
+        <dl class="details">
+          <div><dt>Record type</dt><dd class="details__strong">Non-member Organizational Leader</dd></div>
+          <div><dt>Organizational position</dt><dd class="details__strong">{{ leader.position_name }}</dd></div>
+        </dl>
+      </article>
+    </div>
+    <div class="stack md-col">
+      <article class="panel md-card">
+        <header class="panel__head md-card__head"><h2><span>Membership count protection</span></h2></header>
+        <p class="muted">This person appears in the organizational structure but is not a choir member, so they are not counted in member totals.</p>
+      </article>
+      {% if can('members.manage') %}
+        <article class="panel md-card">
+          <header class="panel__head md-card__head"><h2><span>Record</span></h2></header>
+          <dl class="details">
+            <div><dt>Added</dt><dd>{{ leader.created_at|pretty_stamp }}{% if added_by %} &middot; {{ added_by }}{% endif %}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ leader.updated_at|pretty_stamp }}{% if updated_by %} &middot; {{ updated_by }}{% endif %}</dd></div>
+          </dl>
+        </article>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,61 @@
+{#
+  member_attendance.html - SECRETARY: START A NEW ATTENDANCE SESSION, OR REOPEN ONE
+  Only positions with "attendance.manage" (POSITION_CAPABILITIES in app.py) can open this page.
+#}
+{% extends "member_base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block nav_home %}is-active{% endblock %}
+
+{% block content %}
+  <header class="page-head">
+    <p class="page-head__date"><a class="back-link" href="{{ url_for('member_home') }}">&larr; Dashboard</a></p>
+    <h1>Take attendance</h1>
+    <p class="page-head__lead">Start a session for a rehearsal or Mass, then record who attended.</p>
+    <span class="rule rule--dark" aria-hidden="true"></span>
+  </header>
+
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>New session</h2></header>
+    <form method="post" action="{{ url_for('member_attendance_manage') }}" class="form" novalidate data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid">
+        <div class="field{% if errors.title %} field--error{% endif %}">
+          <label for="s_title">What was it? <span class="req">*</span></label>
+          <input id="s_title" name="title" type="text" maxlength="120" required placeholder="Sunday rehearsal" value="{{ values.title }}">
+          {% if errors.title %}<p class="field__error">{{ errors.title }}</p>{% endif %}
+        </div>
+        <div class="field{% if errors.session_date %} field--error{% endif %}">
+          <label for="s_date">Date <span class="req">*</span></label>
+          <input id="s_date" name="session_date" type="date" max="{{ today }}" required value="{{ values.session_date }}"
+                 data-max-message="Attendance can only be taken for today or a past date.">
+          {% if errors.session_date %}<p class="field__error">{{ errors.session_date }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn--primary" type="submit">Start session</button></div>
+    </form>
+  </section>
+
+  <section class="panel panel--wide">
+    <header class="panel__head"><h2>Recent sessions</h2></header>
+    {% if sessions %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">Date</th><th scope="col">Session</th><th scope="col">Recorded</th><th scope="col">Attended</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {% for s in sessions %}
+              <tr>
+                <td data-label="Date" class="td--primary">{{ s.session_date|pretty_date }}</td>
+                <td data-label="Session">{{ s.title }}</td>
+                <td data-label="Recorded">{{ s.marked }} member{{ '' if s.marked == 1 else 's' }}</td>
+                <td data-label="Attended">{{ s.attended }}</td>
+                <td data-label="Actions"><div class="table__actions"><a class="link-action" href="{{ url_for('member_attendance_mark', session_id=s.id) }}">Open</a></div></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No sessions yet</p><p class="empty__text">Start your first session above.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

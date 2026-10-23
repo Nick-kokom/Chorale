@@ -1,0 +1,225 @@
+{#
+  schedule.html - SCHEDULE & ACTIVITIES (calendar and list)
+  Data comes from schedule_list() in app.py. The same page serves administrators (admin menu) and
+  choir members (member menu): "layout" is chosen in app.py. Members can only view; the round "+" button,
+  "Edit" links and "Clear schedules" appear only for people allowed to (can_manage / can('schedule.clear')).
+  [CARDS] summary numbers   [FILTERS] search and filters   [VIEWS] calendar / list   [UPCOMING] side panel
+  [CLEAR] confirmation dialog (falls back to the full page schedule_clear.html when JavaScript is off)
+  Look: static/css/style.css, search [SCHEDULE REDESIGN]. Behaviour: static/js/schedule.js.
+#}
+{% extends layout %}
+{% from "_schedule_macros.html" import activity_row, cat_badge, upcoming_row %}
+{% block title %}Schedule{% endblock %}
+{% block body_class %}page-schedule page-schedule-index{% endblock %}
+{% block nav_schedule %}is-active{% endblock %}
+
+{% block content %}
+  <header class="sch-head">
+    <div class="sch-head__text">
+      <p class="page-head__date">Choir calendar</p>
+      <h1>Schedule &amp; Activities</h1>
+      <p class="page-head__lead">Rehearsals, services and gatherings of the choir{% if not can_manage %}. You can view everything here; your officers add and change the schedule.{% else %}.{% endif %}</p>
+    </div>
+    <div class="sch-head__actions">
+      {# Administrator only. Opens a confirmation dialog; nothing is erased until it is confirmed there. #}
+      {% if can('schedule.clear') %}
+        <a class="btn btn--danger-outline btn--sm sch-clear-btn" href="{{ url_for('schedule_clear') }}" data-clear-open>
+          <svg class="sch-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>Clear schedules</a>
+      {% endif %}
+      {% if can_manage %}
+        <a class="sch-add" href="{{ url_for('schedule_new') }}" aria-label="Add schedule" title="Add schedule">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  {# [CARDS] Real counts from the activities table #}
+  <section class="sch-stats" aria-label="Summary">
+    {% for card in cards %}
+      <article class="sch-stat sch-stat--{{ card.state }}">
+        <span class="sch-stat__icon" aria-hidden="true">
+          {% if card.icon == 'calendar' %}<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+          {% elif card.icon == 'week' %}<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 14h2M12 14h2M16 14h.01"/></svg>
+          {% elif card.icon == 'month' %}<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>
+          {% else %}<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>{% endif %}
+        </span>
+        <div class="sch-stat__body">
+          <p class="sch-stat__label">{{ card.label }}</p>
+          <p class="sch-stat__value">{% if card.value is none %}&mdash;{% elif card.value == 0 and card.icon == 'clock' %}&mdash;{% else %}{{ card.value }}{% endif %}</p>
+          {% if card.title %}<p class="sch-stat__title" title="{{ card.title }}">{{ card.title }}</p>{% endif %}
+          <p class="sch-stat__note" title="{{ card.note }}">{{ card.note }}</p>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+
+  {# [FILTERS] A normal form (GET): the choices go into the page address, so the page can be bookmarked #}
+  <section class="sch-filters" aria-label="Search and filter">
+    <form class="sch-filters__form" method="get" action="{{ url_for('schedule_list') }}" role="search">
+      <input type="hidden" name="view" value="{{ f.view }}">
+      {% if f.view == 'calendar' %}<input type="hidden" name="month" value="{{ f.month }}">{% endif %}
+      <div class="field sch-filters__search">
+        <label class="sr-only" for="q">Search</label>
+        <input id="q" name="q" type="search" value="{{ f.q }}" maxlength="80" autocomplete="off" placeholder="Search title, venue or instructions">
+      </div>
+      <div class="field">
+        <label for="category">Category</label>
+        <select id="category" name="category" data-autosubmit>
+          <option value="">All categories</option>
+          {% for code, label in categories.items() %}<option value="{{ code }}" {% if f.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="voice">Voice section</label>
+        <select id="voice" name="voice" data-autosubmit>
+          <option value="">All sections</option>
+          {% for v in voices %}<option value="{{ v.id }}" {% if f.voice == v.id|string %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status" data-autosubmit>
+          {% for code, label in statuses.items() %}<option value="{{ code }}" {% if f.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="sch-filters__actions">
+        <button class="btn btn--primary btn--sm" type="submit">Search</button>
+        {% if has_filters %}<a class="btn btn--outline btn--sm" href="{{ url_for('schedule_list', view=f.view) }}">Reset</a>{% endif %}
+      </div>
+      {# Members can narrow the list to what is meant for them #}
+      {% if me %}
+        <label class="checkbox sch-filters__extra"><input type="checkbox" name="mine" value="1" {% if f.mine %}checked{% endif %} data-autosubmit-check>
+          <span>Only activities for me (the whole choir, my voice section, or me by name)</span></label>
+      {% endif %}
+      {% if f.day %}<p class="sch-filters__extra muted">Showing {{ f.day|pretty_date }} only.</p><input type="hidden" name="day" value="{{ f.day }}">{% endif %}
+    </form>
+  </section>
+
+  <div class="sch-layout">
+
+    {# [VIEWS] calendar or list #}
+    <section class="panel sch-main" aria-labelledby="sch-title">
+      <header class="panel__head">
+        <h2 id="sch-title">{{ cal.title if cal else 'All activities' }}</h2>
+        {% if cal %}
+          <span class="sch-nav">
+            <a href="{{ url_for('schedule_list', view='calendar', month=cal.prev, q=f.q or none, category=f.category or none, voice=f.voice or none, status=f.status if f.status != 'all' else none, mine=f.mine or none) }}" aria-label="Previous month">&lsaquo;</a>
+            {% if not cal.is_current %}<a class="sch-nav__today" href="{{ url_for('schedule_list', view='calendar', q=f.q or none, category=f.category or none, voice=f.voice or none, status=f.status if f.status != 'all' else none, mine=f.mine or none) }}">Today</a>{% endif %}
+            <a href="{{ url_for('schedule_list', view='calendar', month=cal.next, q=f.q or none, category=f.category or none, voice=f.voice or none, status=f.status if f.status != 'all' else none, mine=f.mine or none) }}" aria-label="Next month">&rsaquo;</a>
+          </span>
+        {% else %}
+          <span class="panel__meta">{{ rows|length }} shown</span>
+        {% endif %}
+        <nav class="seg" aria-label="View">
+          <a class="seg__item {% if f.view == 'calendar' %}is-active{% endif %}" href="{{ url_for('schedule_list', view='calendar', q=f.q or none, category=f.category or none, voice=f.voice or none, mine=f.mine or none) }}">Calendar</a>
+          <a class="seg__item {% if f.view == 'list' %}is-active{% endif %}" href="{{ url_for('schedule_list', view='list', q=f.q or none, category=f.category or none, voice=f.voice or none, mine=f.mine or none) }}">List</a>
+        </nav>
+      </header>
+
+      {% if cal %}
+        <table class="sch-cal">
+          <thead><tr>{% for d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for week in cal.weeks %}
+              <tr>
+                {% for c in week %}
+                  <td class="sch-cal__day{% if c.other %} sch-cal__day--other{% endif %}{% if c.today %} sch-cal__day--today{% endif %}">
+                    {% if c['items'] %}<a class="sch-cal__num" href="{{ url_for('schedule_list', view='list', day=c.iso, status='all') }}" title="Show this day as a list">{{ c.day }}</a>{% else %}<span class="sch-cal__num">{{ c.day }}</span>{% endif %}
+                    {% for a in c['items'][:2] %}
+                      <a class="sch-chip cat--{{ a.category }}{% if a.cancelled %} sch-chip--cancelled{% endif %}" href="{{ url_for('schedule_view', activity_id=a.id) }}" title="{{ a.title }}{% if a.time %} &middot; {{ a.time }}{% endif %}{% if a.venue %} &middot; {{ a.venue }}{% endif %}{% if a.cancelled %} (cancelled){% endif %}">
+                        <span class="sch-chip__text">{{ a.title }}</span>
+                        {% if a.time %}<span class="sch-chip__time">{{ a.time }}</span>{% endif %}
+                      </a>
+                    {% endfor %}
+                    {% if c['items']|length > 2 %}<a class="sch-more" href="{{ url_for('schedule_list', view='list', day=c.iso, status='all') }}">+{{ c['items']|length - 2 }} more</a>{% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {# Phones: the grid shows dots only, so the month is also listed below #}
+        <div class="sch-agenda">
+          <h3 class="sch-agenda__title">This month</h3>
+          {% if agenda %}<ul class="sch-list">{% for a in agenda %}{{ activity_row(a, can_manage) }}{% endfor %}</ul>
+          {% else %}<p class="muted">No activities this month{% if has_filters %} match your filters{% endif %}.</p>{% endif %}
+        </div>
+        {% if not agenda %}<p class="muted sch-cal__none">No activities this month{% if has_filters %} match your filters{% endif %}.</p>{% endif %}
+
+      {% else %}
+        {% if rows %}
+          <ul class="sch-list">{% for a in rows %}{{ activity_row(a, can_manage) }}{% endfor %}</ul>
+          {% if rows|length >= limit %}<p class="muted">Showing the first {{ limit }}. Use the filters to narrow it down.</p>{% endif %}
+        {% else %}
+          <div class="empty"><span class="empty__mark" aria-hidden="true"></span>
+            <p class="empty__title">{{ 'Nothing matches your search' if has_filters else 'No activities yet' }}</p>
+            <p class="empty__text">{% if has_filters %}Try resetting the filters.{% elif can_manage %}Add the first rehearsal or service with the round + button.{% else %}Your officers will post rehearsals and services here.{% endif %}</p>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <ul class="sch-legend" aria-label="Colour key">{% for code, label in categories.items() %}<li class="cat--{{ code }}"><i aria-hidden="true"></i>{{ label }}</li>{% endfor %}</ul>
+    </section>
+
+    {# [UPCOMING] The next few activities, whatever the filters say #}
+    <aside class="panel sch-side" aria-labelledby="up-title">
+      <header class="panel__head"><h2 id="up-title">Upcoming Activities</h2></header>
+      {% if upcoming %}
+        <ul class="up-list">{% for a in upcoming %}{{ upcoming_row(a) }}{% endfor %}</ul>
+        <a class="up-all" href="{{ url_for('schedule_list', view='list') }}">View all upcoming &rarr;</a>
+      {% else %}
+        <div class="empty"><span class="empty__mark" aria-hidden="true"></span><p class="empty__title">No upcoming activities</p><p class="empty__text">The next ones will appear here.</p></div>
+      {% endif %}
+    </aside>
+  </div>
+
+  {# [CLEAR] Confirmation dialog. Needs: scope, exact phrase, and the administrator's password; the server checks all
+     again and saves a database backup first (schedule_clear in app.py). #}
+  {% if clear_counts is not none %}
+    <dialog class="sch-dialog" id="clear-dialog" aria-labelledby="clear-title">
+      <form method="post" action="{{ url_for('schedule_clear') }}" novalidate data-clear-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <header class="sch-dialog__head">
+          <h2 id="clear-title">Clear schedules</h2>
+          <button type="button" class="sch-dialog__x" data-clear-close aria-label="Close">&times;</button>
+        </header>
+        {% if not clear_counts.total %}
+          <p class="muted">There are no schedules, so there is nothing to clear.</p>
+          <p class="sch-dialog__actions"><button type="button" class="btn btn--outline btn--sm" data-clear-close>Close</button></p>
+        {% else %}
+          <p class="sch-dialog__warn"><strong>This permanently removes schedules and cannot be undone from the app.</strong>
+            Members, voice sections and announcements are not touched. A backup copy of the database is saved first.</p>
+          <fieldset class="sch-clear__choices">
+            <legend class="sr-only">What to clear</legend>
+            <label class="checkbox"><input type="radio" name="scope" value="cancelled" {% if clear_counts.cancelled %}checked{% else %}disabled{% endif %}>
+              <span><strong>Cancelled schedules only</strong> ({{ clear_counts.cancelled }}). Active schedules stay.</span></label>
+            <label class="checkbox"><input type="radio" name="scope" value="all" {% if not clear_counts.cancelled %}checked{% endif %}>
+              <span><strong>Every schedule</strong> ({{ clear_counts.total }}), active and cancelled.</span></label>
+          </fieldset>
+          <label class="checkbox"><input type="checkbox" name="with_attendance" value="1">
+            <span>Also delete their attendance sheets ({{ clear_counts.sheets }} sheet{{ '' if clear_counts.sheets == 1 else 's' }}, {{ clear_counts.records }} record{{ '' if clear_counts.records == 1 else 's' }}).
+              Unticked keeps the attendance; the sheets just stop being linked to a schedule.</span></label>
+          <div class="field">
+            <label for="cl_phrase">Type <strong class="mono">{{ clear_phrase }}</strong> to confirm</label>
+            <input id="cl_phrase" name="confirm_phrase" type="text" required autocomplete="off" autocapitalize="characters" spellcheck="false" data-clear-phrase="{{ clear_phrase }}">
+          </div>
+          <div class="field">
+            <label for="cl_password">Your password</label>
+            <div class="field__group">
+              <input id="cl_password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="field__toggle" data-toggle-password="cl_password" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <p class="sch-dialog__actions">
+            <button type="button" class="btn btn--outline btn--sm" data-clear-close>Cancel</button>
+            <button class="btn btn--danger btn--sm" type="submit" data-clear-submit>Clear schedules</button>
+          </p>
+        {% endif %}
+      </form>
+    </dialog>
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='js/schedule.js') }}" defer></script>
+{% endblock %}
